@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PhantomBox | Phantom Share</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{
+    --void:#05080f;--surface:#0c1120;--panel:#101828;
+    --primary:#3b82f6;--primary-glow:rgba(59,130,246,.35);
+    --success:#10b981;--danger:#ef4444;--warning:#f59e0b;
+    --text:#f0f4ff;--muted:#64748b;
+    --mono:'JetBrains Mono',monospace;--ui:'Outfit',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100%;background:var(--void);color:var(--text);font-family:var(--ui);
+    display:flex;align-items:center;justify-content:center;padding:1rem;}
+
+.bg-grid{position:fixed;inset:0;
+    background-image:linear-gradient(rgba(59,130,246,.03) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(59,130,246,.03) 1px,transparent 1px);
+    background-size:48px 48px;pointer-events:none;z-index:0}
+.glow{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0}
+.glow-1{width:500px;height:500px;background:radial-gradient(circle,rgba(59,130,246,.12),transparent 70%);
+    top:-150px;left:-100px;animation:drift 18s ease-in-out infinite}
+.glow-2{width:400px;height:400px;background:radial-gradient(circle,rgba(16,185,129,.08),transparent 70%);
+    bottom:-100px;right:-100px;animation:drift 24s ease-in-out infinite reverse}
+@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(40px,30px)}}
+
+.card{position:relative;z-index:1;background:var(--surface);border:1px solid rgba(255,255,255,.07);
+    border-radius:20px;padding:2.5rem;width:100%;max-width:480px;text-align:center;
+    box-shadow:0 30px 80px rgba(0,0,0,.5);animation:cardIn .5s cubic-bezier(.22,1,.36,1)}
+@keyframes cardIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+.ghost-icon{font-size:3.5rem;margin-bottom:1.25rem;display:block;
+    animation:ghostFloat 3s ease-in-out infinite}
+@keyframes ghostFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+.spin-icon{font-size:2.5rem;margin-bottom:1.25rem;display:block;
+    animation:spin .8s linear infinite;color:var(--primary)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+h1{font-size:1.5rem;font-weight:800;letter-spacing:-.5px;margin-bottom:.4rem}
+.sub{font-size:.85rem;color:var(--muted);margin-bottom:1.75rem;line-height:1.5}
+
+.file-info{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+    border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;text-align:left}
+.file-row{display:flex;justify-content:space-between;align-items:center;
+    padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.82rem}
+.file-row:last-child{border-bottom:none;padding-bottom:0}
+.file-key{color:var(--muted);font-family:var(--mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px}
+.file-val{font-weight:600;font-family:var(--mono);color:var(--text);word-break:break-all;text-align:right;max-width:60%}
+
+.ttl-bar-wrap{margin-bottom:1.5rem}
+.ttl-label{font-size:.72rem;font-family:var(--mono);color:var(--muted);margin-bottom:.4rem;
+    display:flex;justify-content:space-between}
+.ttl-bar{height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+.ttl-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--success),var(--primary));
+    transition:width .5s linear}
+
+.btn-download{width:100%;padding:1rem 1.5rem;
+    background:linear-gradient(135deg,var(--primary),#1d4ed8);
+    border:none;border-radius:12px;color:white;font-family:var(--ui);font-size:1rem;
+    font-weight:700;cursor:pointer;transition:all .3s;
+    display:flex;align-items:center;justify-content:center;gap:.6rem;margin-bottom:.75rem}
+.btn-download:hover{transform:translateY(-2px);box-shadow:0 8px 24px var(--primary-glow)}
+.btn-download:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+.badge-row{display:flex;gap:.5rem;justify-content:center;margin-bottom:1.5rem;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .7rem;
+    border-radius:20px;font-size:.68rem;font-weight:700;font-family:var(--mono);text-transform:uppercase}
+.b-blue{background:rgba(59,130,246,.15);color:var(--primary)}
+.b-green{background:rgba(16,185,129,.15);color:var(--success)}
+.b-yellow{background:rgba(245,158,11,.15);color:var(--warning)}
+
+.footer-note{font-size:.72rem;color:var(--muted);line-height:1.5}
+.footer-note a{color:var(--primary);text-decoration:none}
+
+.state{display:none;text-align:center;padding:1rem 0}
+.state.active{display:block}
+.state-icon{font-size:3rem;margin-bottom:1rem;display:block}
+.state-title{font-size:1.2rem;font-weight:700;margin-bottom:.4rem}
+.state-msg{font-size:.85rem;color:var(--muted);line-height:1.5}
+
+/* Debug info box */
+.debug-box{margin-top:1rem;padding:.75rem;background:rgba(239,68,68,.08);
+    border:1px solid rgba(239,68,68,.2);border-radius:8px;
+    font-family:var(--mono);font-size:.7rem;color:#f87171;
+    text-align:left;word-break:break-all;display:none}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<div class="card">
+
+    <!-- LOADING STATE -->
+    <div class="state active" id="state-loading">
+        <i class="fa-solid fa-circle-notch spin-icon"></i>
+        <div class="state-title">Summoning the Phantom…</div>
+        <div class="state-msg">Validating your share link and reconstructing the file in RAM.</div>
+        <div style="margin-top:1rem;font-size:.72rem;color:var(--muted);font-family:var(--mono)" id="loading-status">
+            Connecting to PhantomBox…
+        </div>
+    </div>
+
+    <!-- ERROR STATE -->
+    <div class="state" id="state-error">
+        <span class="state-icon">💀</span>
+        <div class="state-title" id="err-title">Link Expired</div>
+        <div class="state-msg" id="err-msg">This phantom has already vanished.</div>
+        <div class="debug-box" id="debug-box"></div>
+        <br>
+        <a href="/" style="color:var(--primary);font-size:.85rem">← Back to PhantomBox</a>
+    </div>
+
+    <!-- READY STATE -->
+    <div class="state" id="state-ready">
+        <span class="ghost-icon">👻</span>
+        <h1>Phantom File Ready</h1>
+        <p class="sub">This file exists temporarily in memory.<br>Download it before the phantom vanishes.</p>
+
+        <div class="badge-row">
+            <span class="badge b-green"><i class="fa-solid fa-lock"></i> AES-256-GCM</span>
+            <span class="badge b-blue"><i class="fa-solid fa-ghost"></i> Ephemeral</span>
+            <span class="badge b-yellow" id="dl-remaining-badge">
+                <i class="fa-solid fa-download"></i> — left
+            </span>
+        </div>
+
+        <div class="file-info">
+            <div class="file-row">
+                <span class="file-key">File</span>
+                <span class="file-val" id="d-filename">—</span>
+            </div>
+            <div class="file-row">
+                <span class="file-key">Size</span>
+                <span class="file-val" id="d-size">—</span>
+            </div>
+            <div class="file-row">
+                <span class="file-key">Shared by</span>
+                <span class="file-val" id="d-owner">—</span>
+            </div>
+            <div class="file-row">
+                <span class="file-key">Downloads left</span>
+                <span class="file-val" id="d-dleft">—</span>
+            </div>
+        </div>
+
+        <div class="ttl-bar-wrap">
+            <div class="ttl-label">
+                <span>Download window</span>
+                <span id="ttl-secs">—</span>
+            </div>
+            <div class="ttl-bar">
+                <div class="ttl-fill" id="ttl-fill" style="width:100%"></div>
+            </div>
+        </div>
+
+        <button class="btn-download" id="btn-dl">
+            <i class="fa-solid fa-download"></i> Download Now
+        </button>
+
+        <p class="footer-note">
+            This is a limited-use share link from
+            <a href="/">PhantomBox</a>.<br>
+            The link self-destructs after the download limit is reached.
+        </p>
+    </div>
+
+    <!-- CONSUMED STATE -->
+    <div class="state" id="state-consumed">
+        <span class="state-icon">💨</span>
+        <div class="state-title">Download Complete</div>
+        <div class="state-msg">The phantom has delivered its payload and vanished.<br>Thank you for using PhantomBox.</div>
+        <br>
+        <a href="/" style="color:var(--primary);font-size:.85rem">← Back to PhantomBox</a>
+    </div>
+
+</div>
+
+<script>
+// ── Config ───────────────────────────────────────────────────
+// Detect API base — works whether served from Flask or opened directly
+const API = `http://${location.hostname}:8000/api`;
+
+let _downloadToken = null;
+let _filename      = null;
+let _ttlTimer      = null;
+let _ttlTotal      = 300; // default 5 min download window
+
+// ── Helpers ──────────────────────────────────────────────────
+function showState(name) {
+    document.querySelectorAll('.state').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById(`state-${name}`);
+    if (el) el.classList.add('active');
+}
+
+function setLoadingStatus(msg) {
+    const el = document.getElementById('loading-status');
+    if (el) el.textContent = msg;
+}
+
+function showError(title, msg, debugInfo) {
+    document.getElementById('err-title').textContent = title;
+    document.getElementById('err-msg').textContent   = msg;
+    if (debugInfo) {
+        const box = document.getElementById('debug-box');
+        box.style.display = 'block';
+        box.textContent = typeof debugInfo === 'object'
+            ? JSON.stringify(debugInfo, null, 2)
+            : String(debugInfo);
+    }
+    showState('error');
+}
+
+function fmtSize(b) {
+    if (!b || b === 0) return '—';
+    if (b >= 1e9) return (b/1e9).toFixed(2) + ' GB';
+    if (b >= 1e6) return (b/1e6).toFixed(2) + ' MB';
+    if (b >= 1024) return (b/1024).toFixed(1) + ' KB';
+    return b + ' B';
+}
+
+// ── Extract token from URL ───────────────────────────────────
+function getShareToken() {
+    // Handles: /share/<token>  or  ?token=<token>
+    const path  = window.location.pathname;
+    const parts = path.split('/share/');
+    if (parts.length > 1 && parts[1]) {
+        return parts[1].split('/')[0].split('?')[0];
+    }
+    // Fallback: query param
+    return new URLSearchParams(window.location.search).get('token');
+}
+
+// ── Main init ────────────────────────────────────────────────
+async function initShare() {
+    const token = getShareToken();
+
+    if (!token) {
+        showError('Invalid Link', 'No share token found in the URL.');
+        return;
+    }
+
+    setLoadingStatus(`Token: ${token.substring(0, 16)}… — Connecting…`);
+
+    try {
+        const url = `${API}/share/use/${encodeURIComponent(token)}`;
+        console.log('🔗 Fetching:', url);
+        setLoadingStatus('Validating share link…');
+
+        const res = await fetch(url);
+        let data;
+
+        try {
+            data = await res.json();
+        } catch (parseErr) {
+            showError(
+                'Server Error',
+                'Could not parse server response. Is PhantomBox running?',
+                `HTTP ${res.status} — parse error: ${parseErr.message}`
+            );
+            return;
+        }
+
+        console.log('📦 Share response:', data);
+
+        if (!res.ok || !data.success) {
+            // Map HTTP status to user-friendly messages
+            const statusMsgs = {
+                410: 'This share link has expired or reached its download limit.',
+                404: 'Share link not found.',
+                500: 'Server error while reconstructing the file.',
+            };
+            showError(
+                res.status === 410 ? 'Link Consumed' : 'Link Unavailable',
+                data.error || statusMsgs[res.status] || `Error ${res.status}`,
+                process?.env?.NODE_ENV === 'development' ? data : null
+            );
+            return;
+        }
+
+        // ── Success ──────────────────────────────────────────
+        setLoadingStatus('File reconstructed in RAM ✓');
+
+        _downloadToken = data.download_token;
+        _filename      = data.filename || data.original_filename || 'phantom_file';
+        _ttlTotal      = data.download_ttl || 300;
+
+        // Fill in file info
+        document.getElementById('d-filename').textContent = _filename;
+        document.getElementById('d-size').textContent     = fmtSize(data.file_size);
+        document.getElementById('d-owner').textContent    = data.owner || '—';
+        document.getElementById('d-dleft').textContent    = data.downloads_remaining ?? '—';
+
+        const remaining = data.downloads_remaining ?? '?';
+        document.getElementById('dl-remaining-badge').innerHTML =
+            `<i class="fa-solid fa-download"></i> ${remaining} download${remaining !== 1 ? 's' : ''} left`;
+
+        // Attach download handler
+        const btn = document.getElementById('btn-dl');
+        btn.addEventListener('click', triggerDownload);
+
+        showState('ready');
+
+        // Start TTL countdown using download_ttl (5 min window)
+        startCountdown(_ttlTotal);
+
+    } catch (networkErr) {
+        console.error('Network error:', networkErr);
+        showError(
+            'Connection Failed',
+            `Cannot reach PhantomBox at ${API}. Is the server running?`,
+            networkErr.message
+        );
+    }
+}
+
+// ── TTL countdown ────────────────────────────────────────────
+function startCountdown(ttlSeconds) {
+    let elapsed   = 0;
+    const fill    = document.getElementById('ttl-fill');
+    const secsEl  = document.getElementById('ttl-secs');
+
+    function fmt(s) {
+        if (s >= 60) return `${Math.floor(s/60)}m ${s%60}s`;
+        return `${s}s`;
+    }
+
+    secsEl.textContent = fmt(ttlSeconds);
+
+    _ttlTimer = setInterval(() => {
+        elapsed++;
+        const remaining = Math.max(0, ttlSeconds - elapsed);
+        const pct       = (remaining / ttlSeconds) * 100;
+
+        fill.style.width = pct + '%';
+        secsEl.textContent = fmt(remaining);
+
+        if (pct <= 30) {
+            fill.style.background = 'linear-gradient(90deg,var(--warning),var(--danger))';
+        }
+        if (remaining === 0) {
+            clearInterval(_ttlTimer);
+            secsEl.textContent = 'Expired';
+        }
+    }, 1000);
+}
+
+// ── Trigger download ─────────────────────────────────────────
+async function triggerDownload() {
+    if (!_downloadToken) {
+        alert('Download token is missing. Please refresh the share link.');
+        return;
+    }
+
+    const btn = document.getElementById('btn-dl');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Downloading…';
+    clearInterval(_ttlTimer);
+
+    // Consume token immediately
+    const token = _downloadToken;
+    _downloadToken = null;
+
+    try {
+        const res = await fetch(`${API}/download/${token}`);
+
+        if (!res.ok) {
+            const errText = await res.text().catch(() => '');
+            throw new Error(`Server returned ${res.status}: ${errText.substring(0, 100)}`);
+        }
+
+        const blob = await res.blob();
+
+        if (blob.size === 0) {
+            throw new Error('Received empty file. The download token may have expired.');
+        }
+
+        // Extract filename from Content-Disposition header if available
+        const contentDisp = res.headers.get('Content-Disposition') || '';
+        const nameMatch   = contentDisp.match(/filename[^;=\n]*=['"]?([^'"\n]+)['"]?/);
+        const filename    = nameMatch ? nameMatch[1] : _filename || `phantom_${Date.now()}`;
+
+        // Trigger browser save dialog
+        const url = URL.createObjectURL(blob);
+        const a   = document.createElement('a');
+        a.href     = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        // Show consumed state after short delay
+        setTimeout(() => showState('consumed'), 1500);
+
+    } catch (err) {
+        console.error('Download failed:', err);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-download"></i> Download Now';
+        alert(`Download failed: ${err.message}`);
+    }
+}
+
+// ── Boot ─────────────────────────────────────────────────────
+initShare();
+</script>
+</body>
+</html>

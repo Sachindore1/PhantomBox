@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhantomBox | Admin Control</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root {
+    --void:#05080f;--surface:#0c1120;--panel:#101828;--card:#141f30;
+    --border:rgba(255,255,255,0.06);--border-bright:rgba(255,255,255,0.12);
+    --primary:#3b82f6;--primary-dim:rgba(59,130,246,0.15);
+    --primary-glow:rgba(59,130,246,0.35);
+    --success:#10b981;--success-dim:rgba(16,185,129,0.12);
+    --warning:#f59e0b;--warning-dim:rgba(245,158,11,0.12);
+    --danger:#ef4444;--danger-dim:rgba(239,68,68,0.12);
+    --purple:#8b5cf6;--purple-dim:rgba(139,92,246,0.12);
+    --cyan:#06b6d4;--cyan-dim:rgba(6,182,212,0.12);
+    --text:#f0f4ff;--muted:#64748b;--soft:#94a3b8;
+    --mono:'JetBrains Mono',monospace;--ui:'Outfit',sans-serif;
+    --radius:12px;--radius-sm:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:var(--ui);background:var(--void);color:var(--text);overflow:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
+
+/* ── Layout ── */
+.shell{display:flex;height:100vh}
+
+/* ── Sidebar ── */
+.sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);
+    display:flex;flex-direction:column;padding:1.5rem 1rem;flex-shrink:0;overflow-y:auto}
+.logo{display:flex;align-items:center;gap:.75rem;margin-bottom:2rem;padding:.5rem}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--primary),#1d4ed8);
+    border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-size:1.1rem;box-shadow:0 0 16px var(--primary-glow);flex-shrink:0}
+.logo-text{font-size:1rem;font-weight:800;letter-spacing:-.5px}
+.logo-sub{font-size:.65rem;color:var(--warning);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px}
+
+.nav-section{margin-bottom:1.5rem}
+.nav-label{font-size:.65rem;font-family:var(--mono);color:var(--muted);letter-spacing:2px;
+    text-transform:uppercase;padding:.25rem .75rem;margin-bottom:.5rem}
+.nav-item{display:flex;align-items:center;gap:.75rem;padding:.7rem .75rem;border-radius:var(--radius-sm);
+    cursor:pointer;transition:all .2s;color:var(--soft);font-size:.875rem;font-weight:500;
+    border:1px solid transparent;background:none;width:100%;text-align:left}
+.nav-item i{width:16px;text-align:center;font-size:.9rem}
+.nav-item:hover{background:var(--card);color:var(--text)}
+.nav-item.active{background:var(--primary-dim);color:var(--primary);border-color:rgba(59,130,246,0.2)}
+.nav-badge{margin-left:auto;background:var(--danger);color:white;font-size:.6rem;
+    padding:.1rem .4rem;border-radius:10px;font-family:var(--mono)}
+
+.sidebar-footer{margin-top:auto;padding-top:1rem;border-top:1px solid var(--border)}
+.user-pill{display:flex;align-items:center;gap:.6rem;padding:.6rem .75rem;
+    background:var(--card);border-radius:var(--radius-sm);margin-bottom:.75rem}
+.user-avatar{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--warning),#b45309);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;flex-shrink:0}
+.user-name{font-size:.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:.62rem;color:var(--warning);font-family:var(--mono)}
+.btn-logout{width:100%;padding:.6rem;background:transparent;border:1px solid rgba(239,68,68,.2);
+    color:#f87171;border-radius:var(--radius-sm);cursor:pointer;font-size:.8rem;font-weight:600;
+    font-family:var(--ui);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:.5rem}
+.btn-logout:hover{background:var(--danger-dim);border-color:rgba(239,68,68,.4)}
+
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:56px;border-bottom:1px solid var(--border);display:flex;align-items:center;
+    padding:0 1.5rem;gap:1rem;background:var(--surface);flex-shrink:0}
+.page-title{font-size:1.1rem;font-weight:700;flex:1}
+.topbar-meta{font-size:.78rem;font-family:var(--mono);color:var(--muted)}
+.topbar-actions{display:flex;align-items:center;gap:.75rem}
+.btn-sm{padding:.4rem .9rem;border-radius:var(--radius-sm);font-size:.78rem;font-weight:600;
+    cursor:pointer;transition:all .2s;border:none;font-family:var(--ui);display:flex;align-items:center;gap:.4rem}
+.btn-primary{background:var(--primary);color:white}
+.btn-primary:hover{background:#2563eb;box-shadow:0 4px 12px var(--primary-glow)}
+.btn-ghost{background:var(--card);color:var(--soft);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--text);border-color:var(--border-bright)}
+
+.content{flex:1;overflow-y:auto;padding:1.5rem}
+
+/* ── Pages ── */
+.page{display:none}
+.page.active{display:block;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Stats Grid ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+    padding:1.25rem;display:flex;flex-direction:column;gap:.75rem;transition:border-color .2s}
+.stat-card:hover{border-color:var(--border-bright)}
+.stat-top{display:flex;justify-content:space-between;align-items:flex-start}
+.stat-label{font-size:.72rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.stat-icon{width:32px;height:32px;border-radius:var(--radius-sm);display:flex;
+    align-items:center;justify-content:center;font-size:.85rem}
+.ic-blue{background:var(--primary-dim);color:var(--primary)}
+.ic-green{background:var(--success-dim);color:var(--success)}
+.ic-yellow{background:var(--warning-dim);color:var(--warning)}
+.ic-purple{background:var(--purple-dim);color:var(--purple)}
+.ic-cyan{background:var(--cyan-dim);color:var(--cyan)}
+.ic-red{background:var(--danger-dim);color:var(--danger)}
+.stat-value{font-size:1.75rem;font-weight:800;font-family:var(--mono);letter-spacing:-1px}
+.stat-trend{font-size:.72rem;color:var(--muted);display:flex;align-items:center;gap:.3rem}
+.trend-up{color:var(--success)}
+.trend-down{color:var(--danger)}
+
+/* ── Charts ── */
+.dash-grid{display:grid;grid-template-columns:2fr 1fr;gap:1rem;margin-bottom:1.5rem}
+.chart-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.card-title{font-size:.85rem;font-weight:700;display:flex;align-items:center;gap:.5rem}
+.card-title i{color:var(--primary)}
+
+/* Activity bars */
+.activity-bars{display:flex;align-items:flex-end;gap:4px;height:80px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.bar{width:100%;background:var(--primary);border-radius:3px 3px 0 0;
+    min-height:4px;transition:height .6s ease;opacity:.8}
+.bar:hover{opacity:1}
+.bar-label{font-size:.55rem;font-family:var(--mono);color:var(--muted)}
+
+/* Node status */
+.nodes-grid{display:flex;flex-direction:column;gap:.6rem}
+.node-row{display:flex;align-items:center;gap:.75rem;padding:.6rem .75rem;
+    background:var(--card);border-radius:var(--radius-sm)}
+.node-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-green{background:var(--success);box-shadow:0 0 6px var(--success)}
+.dot-red{background:var(--danger);box-shadow:0 0 6px var(--danger)}
+.dot-yellow{background:var(--warning);box-shadow:0 0 6px var(--warning)}
+.node-name{font-size:.78rem;font-weight:600;flex:1}
+.node-port{font-size:.68rem;font-family:var(--mono);color:var(--muted)}
+.node-status{font-size:.68rem;font-family:var(--mono)}
+
+/* ── Tables ── */
+.table-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.table-toolbar{display:flex;align-items:center;gap:.75rem;padding:1rem 1.25rem;
+    border-bottom:1px solid var(--border)}
+.search-input{flex:1;max-width:280px;padding:.5rem .75rem;background:var(--card);
+    border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);
+    font-size:.8rem;font-family:var(--mono);outline:none;transition:border-color .2s}
+.search-input:focus{border-color:var(--primary)}
+.search-input::placeholder{color:var(--muted)}
+.filter-select{padding:.5rem .75rem;background:var(--card);border:1px solid var(--border);
+    border-radius:var(--radius-sm);color:var(--text);font-size:.78rem;outline:none;cursor:pointer}
+.table-count{font-size:.72rem;font-family:var(--mono);color:var(--muted);margin-left:auto}
+
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{padding:.75rem 1.25rem;text-align:left;font-size:.68rem;font-family:var(--mono);
+    text-transform:uppercase;letter-spacing:1px;color:var(--muted);
+    border-bottom:1px solid var(--border);white-space:nowrap;background:var(--card)}
+.data-table td{padding:.8rem 1.25rem;font-size:.8rem;border-bottom:1px solid rgba(255,255,255,0.04)}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:rgba(255,255,255,0.02)}
+.mono{font-family:var(--mono)}
+.truncate{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .6rem;
+    border-radius:20px;font-size:.65rem;font-weight:700;font-family:var(--mono);text-transform:uppercase}
+.badge-green{background:var(--success-dim);color:var(--success)}
+.badge-red{background:var(--danger-dim);color:var(--danger)}
+.badge-yellow{background:var(--warning-dim);color:var(--warning)}
+.badge-blue{background:var(--primary-dim);color:var(--primary)}
+.badge-purple{background:var(--purple-dim);color:var(--purple)}
+.badge-muted{background:rgba(255,255,255,0.06);color:var(--muted)}
+
+/* ── Security Monitor ── */
+.security-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.alert-list{display:flex;flex-direction:column;gap:.5rem}
+.alert-item{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;
+    background:var(--card);border-radius:var(--radius-sm);border-left:3px solid var(--danger)}
+.alert-item.warn{border-left-color:var(--warning)}
+.alert-item.info{border-left-color:var(--primary)}
+.alert-icon{font-size:.9rem;flex-shrink:0}
+.alert-msg{flex:1;font-size:.78rem}
+.alert-time{font-size:.65rem;font-family:var(--mono);color:var(--muted);white-space:nowrap}
+
+/* ── Share Links ── */
+.share-form{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+    padding:1.25rem;margin-bottom:1rem}
+.form-row{display:grid;grid-template-columns:2fr 1fr 1fr;gap:.75rem;margin-bottom:.75rem}
+.form-group{display:flex;flex-direction:column;gap:.35rem}
+.form-label{font-size:.68rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.form-input{padding:.6rem .85rem;background:var(--card);border:1px solid var(--border);
+    border-radius:var(--radius-sm);color:var(--text);font-size:.82rem;font-family:var(--mono);
+    outline:none;transition:border-color .2s;width:100%}
+.form-input:focus{border-color:var(--primary)}
+.form-input::placeholder{color:var(--muted)}
+.form-select{padding:.6rem .85rem;background:var(--card);border:1px solid var(--border);
+    border-radius:var(--radius-sm);color:var(--text);font-size:.82rem;outline:none;cursor:pointer}
+
+/* Share link result */
+.share-result{padding:1rem;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);
+    border-radius:var(--radius-sm);margin-top:.75rem}
+.share-url{font-family:var(--mono);font-size:.75rem;word-break:break-all;color:var(--success);
+    margin:.5rem 0;padding:.5rem;background:rgba(0,0,0,.3);border-radius:4px}
+.countdown-bar{height:3px;background:var(--success);border-radius:2px;
+    animation:countdown linear forwards}
+@keyframes countdown{from{width:100%}to{width:0%}}
+
+/* ── Blockchain viewer ── */
+.chain-viz{display:flex;flex-direction:column;gap:.5rem;max-height:400px;overflow-y:auto}
+.block-card{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;
+    background:var(--card);border-radius:var(--radius-sm);border:1px solid var(--border);
+    cursor:pointer;transition:all .2s}
+.block-card:hover{border-color:var(--border-bright);transform:translateX(4px)}
+.block-num{width:40px;height:40px;border-radius:var(--radius-sm);display:flex;
+    align-items:center;justify-content:center;font-weight:800;font-size:.9rem;
+    font-family:var(--mono);flex-shrink:0}
+.block-genesis{background:var(--success-dim);color:var(--success)}
+.block-file{background:var(--primary-dim);color:var(--primary)}
+.block-info{flex:1;min-width:0}
+.block-hash {
+  font-family: var(--mono);
+  font-size: .68rem;
+  color: var(--muted);
+  /* Truncation fix */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.block-type {
+  font-size: .78rem;
+  font-weight: 600;
+}
+
+.block-time{font-size:.65rem;font-family:var(--mono);color:var(--muted);white-space:nowrap}
+
+/* ── Spinners / states ── */
+.loading-state{display:flex;align-items:center;justify-content:center;padding:3rem;
+    flex-direction:column;gap:1rem;color:var(--muted)}
+.spin{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:3rem;color:var(--muted)}
+.empty-state i{font-size:2.5rem;opacity:.3;margin-bottom:.75rem;display:block}
+.empty-state p{font-size:.85rem}
+
+/* ── Toast ── */
+#toast-root{position:fixed;bottom:1.5rem;right:1.5rem;display:flex;flex-direction:column;
+    gap:.5rem;z-index:9999}
+.toast-msg{padding:.75rem 1.25rem;border-radius:var(--radius-sm);font-size:.8rem;
+    display:flex;align-items:center;gap:.6rem;animation:toastIn .3s ease;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:320px}
+.toast-success{background:#064e3b;border:1px solid rgba(16,185,129,.3);color:#6ee7b7}
+.toast-error{background:#7f1d1d;border:1px solid rgba(239,68,68,.3);color:#fca5a5}
+.toast-info{background:#1e3a5f;border:1px solid rgba(59,130,246,.3);color:#93c5fd}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+/* ── Action buttons in tables ── */
+.action-row{display:flex;gap:.4rem}
+.icon-btn{width:28px;height:28px;border-radius:6px;border:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:.75rem;transition:all .2s}
+.icon-btn-blue{background:var(--primary-dim);color:var(--primary)}
+.icon-btn-blue:hover{background:var(--primary);color:white}
+.icon-btn-red{background:var(--danger-dim);color:var(--danger)}
+.icon-btn-red:hover{background:var(--danger);color:white}
+.icon-btn-green{background:var(--success-dim);color:var(--success)}
+.icon-btn-green:hover{background:var(--success);color:white}
+
+/* Responsive */
+@media(max-width:1100px){
+    .stats-row{grid-template-columns:repeat(2,1fr)}
+    .dash-grid{grid-template-columns:1fr}
+    .security-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+    <div class="logo">
+        <div class="logo-icon"><i class="fa-solid fa-ghost"></i></div>
+        <div>
+            <div class="logo-text">PhantomBox</div>
+            <div class="logo-sub">Admin Panel</div>
+        </div>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-label">Overview</div>
+        <button class="nav-item active" onclick="showPage('dashboard')">
+            <i class="fa-solid fa-chart-line"></i> Dashboard
+        </button>
+        <button class="nav-item" onclick="showPage('security')">
+            <i class="fa-solid fa-shield-halved"></i> Security Monitor
+            <span class="nav-badge" id="badge-threats" style="display:none">!</span>
+        </button>
+        <button class="nav-item" onclick="showPage('blockchain')">
+            <i class="fa-solid fa-link"></i> Blockchain
+        </button>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-label">Data</div>
+        <button class="nav-item" onclick="showPage('files')">
+            <i class="fa-solid fa-file-shield"></i> All Files
+        </button>
+        <button class="nav-item" onclick="showPage('shares')">
+            <i class="fa-solid fa-share-nodes"></i> Share Links
+        </button>
+        <button class="nav-item" onclick="showPage('audit')">
+            <i class="fa-solid fa-scroll"></i> Audit Logs
+        </button>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-label">Users</div>
+        <button class="nav-item" onclick="showPage('users')">
+            <i class="fa-solid fa-users"></i> User Management
+        </button>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-label">Navigate</div>
+        <button class="nav-item" onclick="window.location.href='index.html'">
+            <i class="fa-solid fa-arrow-left"></i> Back to App
+        </button>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="user-pill">
+            <div class="user-avatar" id="sidebar-avatar">A</div>
+            <div style="min-width:0">
+                <div class="user-name" id="sidebar-name">Admin</div>
+                <div class="user-role">🛡️ ADMIN</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="window.pbLogout?.()">
+            <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+        </button>
+    </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<main class="main">
+    <div class="topbar">
+        <div class="page-title" id="topbar-title">Dashboard</div>
+        <div class="topbar-meta" id="topbar-time">--:--:--</div>
+        <div class="topbar-actions">
+            <button class="btn-sm btn-ghost" onclick="refreshCurrentPage()">
+                <i class="fa-solid fa-rotate-right"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <div class="content">
+
+    <!-- ══════════ DASHBOARD ══════════ -->
+    <div class="page active" id="page-dashboard">
+        <div class="stats-row" id="stats-row">
+            <div class="stat-card"><div class="stat-top"><span class="stat-label">Total Users</span><div class="stat-icon ic-blue"><i class="fa-solid fa-users"></i></div></div><div class="stat-value" id="s-users">—</div><div class="stat-trend">Registered accounts</div></div>
+            <div class="stat-card"><div class="stat-top"><span class="stat-label">Secured Files</span><div class="stat-icon ic-purple"><i class="fa-solid fa-file-shield"></i></div></div><div class="stat-value" id="s-files">—</div><div class="stat-trend">In distributed storage</div></div>
+            <div class="stat-card"><div class="stat-top"><span class="stat-label">Data Secured</span><div class="stat-icon ic-cyan"><i class="fa-solid fa-database"></i></div></div><div class="stat-value" id="s-size">—</div><div class="stat-trend">Total encrypted</div></div>
+            <div class="stat-card"><div class="stat-top"><span class="stat-label">Active Shares</span><div class="stat-icon ic-green"><i class="fa-solid fa-share-nodes"></i></div></div><div class="stat-value" id="s-shares">—</div><div class="stat-trend">Live share links</div></div>
+            <div class="stat-card"><div class="stat-top"><span class="stat-label">Nodes Online</span><div class="stat-icon ic-yellow"><i class="fa-solid fa-server"></i></div></div><div class="stat-value" id="s-nodes">—</div><div class="stat-trend">Infrastructure</div></div>
+            <div class="stat-card"><div class="stat-top"><span class="stat-label">Events (24h)</span><div class="stat-icon ic-red"><i class="fa-solid fa-bolt"></i></div></div><div class="stat-value" id="s-events">—</div><div class="stat-trend">Audit log entries</div></div>
+            <div class="stat-card"><div class="stat-top"><span class="stat-label">Uploads (24h)</span><div class="stat-icon ic-green"><i class="fa-solid fa-cloud-arrow-up"></i></div></div><div class="stat-value" id="s-uploads24">—</div><div class="stat-trend">Files uploaded today</div></div>
+            <div class="stat-card"><div class="stat-top"><span class="stat-label">Admin Users</span><div class="stat-icon ic-yellow"><i class="fa-solid fa-user-shield"></i></div></div><div class="stat-value" id="s-admins">—</div><div class="stat-trend">With admin access</div></div>
+        </div>
+
+        <div class="dash-grid">
+            <div class="chart-card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fa-solid fa-chart-bar"></i> Activity (7 days)</div>
+                </div>
+                <div class="activity-bars" id="activity-chart">
+                    <div class="loading-state"><i class="fa-solid fa-spinner spin"></i></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:.5rem;font-size:.65rem;font-family:var(--mono);color:var(--muted)" id="activity-labels"></div>
+            </div>
+            <div class="chart-card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fa-solid fa-circle-dot"></i> Node Status</div>
+                </div>
+                <div class="nodes-grid" id="nodes-grid">
+                    <div class="loading-state"><i class="fa-solid fa-spinner spin"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-trophy"></i> Top Uploaders</div>
+            </div>
+            <table class="data-table" id="top-uploaders">
+                <thead><tr><th>User</th><th>Files</th><th>Total Size</th></tr></thead>
+                <tbody><tr><td colspan="3" class="empty-state"><i class="fa-solid fa-spinner spin" style="font-size:1rem"></i></td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══════════ FILES ══════════ -->
+    <div class="page" id="page-files">
+        <div class="table-card">
+            <div class="table-toolbar">
+                <input class="search-input" id="file-search" placeholder="Search filename or owner…" oninput="filterFiles(this.value)">
+                <button class="btn-sm btn-ghost" onclick="loadFiles()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                <span class="table-count" id="file-count"></span>
+            </div>
+            <div style="overflow-x:auto">
+                <table class="data-table">
+                    <thead><tr>
+                        <th>Filename</th><th>File ID</th><th>Owner</th>
+                        <th>Size</th><th>Fragments</th><th>Uploaded</th><th>Actions</th>
+                    </tr></thead>
+                    <tbody id="files-tbody">
+                        <tr><td colspan="7"><div class="loading-state"><i class="fa-solid fa-spinner spin"></i><span>Loading files…</span></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ USERS ══════════ -->
+    <div class="page" id="page-users">
+        <div class="table-card">
+            <div class="table-toolbar">
+                <input class="search-input" id="user-search" placeholder="Search by email…" oninput="filterUsers(this.value)">
+                <button class="btn-sm btn-ghost" onclick="loadUsers()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                <span class="table-count" id="user-count"></span>
+            </div>
+            <div style="overflow-x:auto">
+                <table class="data-table">
+                    <thead><tr>
+                        <th>User</th><th>Role</th><th>Files</th>
+                        <th>Total Size</th><th>Last Login</th><th>Status</th><th>Last Activity</th>
+                    </tr></thead>
+                    <tbody id="users-tbody">
+                        <tr><td colspan="7"><div class="loading-state"><i class="fa-solid fa-spinner spin"></i><span>Loading users…</span></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ AUDIT ══════════ -->
+    <div class="page" id="page-audit">
+        <div class="table-card">
+            <div class="table-toolbar">
+                <input class="search-input" id="audit-search" placeholder="Filter by user email…" oninput="filterAudit(this.value)">
+                <select class="filter-select" id="audit-action-filter" onchange="loadAudit()">
+                    <option value="">All Actions</option>
+                    <option value="LOGIN_SUCCESS">Login Success</option>
+                    <option value="LOGIN_FAILED">Login Failed</option>
+                    <option value="UPLOAD">Upload</option>
+                    <option value="DOWNLOAD">Download</option>
+                    <option value="DOWNLOAD_DENIED">Download Denied</option>
+                    <option value="SHARE_CREATED">Share Created</option>
+                    <option value="SHARE_DOWNLOAD">Share Download</option>
+                    <option value="SHARE_REVOKED">Share Revoked</option>
+                    <option value="ACCOUNT_LOCKED">Account Locked</option>
+                    <option value="REGISTER">Register</option>
+                </select>
+                <button class="btn-sm btn-ghost" onclick="loadAudit()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                <span class="table-count" id="audit-count"></span>
+            </div>
+            <div style="overflow-x:auto">
+                <table class="data-table">
+                    <thead><tr>
+                        <th>Timestamp</th><th>Event</th><th>User</th>
+                        <th>File ID</th><th>IP Address</th><th>Details</th>
+                    </tr></thead>
+                    <tbody id="audit-tbody">
+                        <tr><td colspan="6"><div class="loading-state"><i class="fa-solid fa-spinner spin"></i><span>Loading audit log…</span></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ SECURITY ══════════ -->
+    <div class="page" id="page-security">
+        <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+            <div class="stat-card"><div class="stat-top"><span class="stat-label">Locked Accounts</span><div class="stat-icon ic-red"><i class="fa-solid fa-lock"></i></div></div><div class="stat-value" id="sec-locked">—</div></div>
+            <div class="stat-card"><div class="stat-top"><span class="stat-label">Failed Logins (24h)</span><div class="stat-icon ic-yellow"><i class="fa-solid fa-triangle-exclamation"></i></div></div><div class="stat-value" id="sec-fails">—</div></div>
+            <div class="stat-card"><div class="stat-top"><span class="stat-label">Denied Downloads</span><div class="stat-icon ic-red"><i class="fa-solid fa-ban"></i></div></div><div class="stat-value" id="sec-denied">—</div></div>
+        </div>
+        <div class="security-grid">
+            <div class="chart-card">
+                <div class="card-header"><div class="card-title"><i class="fa-solid fa-lock"></i> Locked Accounts</div></div>
+                <div id="locked-accounts-list"><div class="loading-state"><i class="fa-solid fa-spinner spin"></i></div></div>
+            </div>
+            <div class="chart-card">
+                <div class="card-header"><div class="card-title"><i class="fa-solid fa-triangle-exclamation"></i> Recent Failed Logins</div></div>
+                <div id="failed-logins-list"><div class="loading-state"><i class="fa-solid fa-spinner spin"></i></div></div>
+            </div>
+            <div class="chart-card">
+                <div class="card-header"><div class="card-title"><i class="fa-solid fa-ban"></i> Denied Download Attempts</div></div>
+                <div id="denied-list"><div class="loading-state"><i class="fa-solid fa-spinner spin"></i></div></div>
+            </div>
+            <div class="chart-card">
+                <div class="card-header"><div class="card-title"><i class="fa-solid fa-server"></i> Node Health</div></div>
+                <div class="nodes-grid" id="sec-nodes"><div class="loading-state"><i class="fa-solid fa-spinner spin"></i></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ BLOCKCHAIN ══════════ -->
+    <div class="page" id="page-blockchain">
+        <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+            <div class="stat-card"><div class="stat-top"><span class="stat-label">Chain Length</span><div class="stat-icon ic-cyan"><i class="fa-solid fa-cubes"></i></div></div><div class="stat-value" id="bc-length">—</div></div>
+            <div class="stat-card"><div class="stat-top"><span class="stat-label">File Registrations</span><div class="stat-icon ic-purple"><i class="fa-solid fa-file-shield"></i></div></div><div class="stat-value" id="bc-regs">—</div></div>
+            <div class="stat-card"><div class="stat-top"><span class="stat-label">Genesis Hash</span><div class="stat-icon ic-green"><i class="fa-solid fa-fingerprint"></i></div></div><div class="stat-value mono" style="font-size:.85rem" id="bc-genesis">—</div></div>
+        </div>
+        <div class="chart-card">
+            <div class="card-header"><div class="card-title"><i class="fa-solid fa-link"></i> Block Explorer</div></div>
+            <div class="chain-viz" id="chain-viz"><div class="loading-state"><i class="fa-solid fa-spinner spin"></i></div></div>
+        </div>
+        <div class="chart-card" style="margin-top:1rem">
+            <div class="card-header"><div class="card-title"><i class="fa-solid fa-file-shield"></i> File Registrations</div></div>
+            <table class="data-table">
+                <thead><tr><th>Block</th><th>File ID</th><th>Hash</th><th>Fragments</th><th>Owner</th><th>Registered</th></tr></thead>
+                <tbody id="bc-regs-tbody"><tr><td colspan="6"><div class="loading-state"><i class="fa-solid fa-spinner spin"></i></div></td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══════════ SHARES ══════════ -->
+    <div class="page" id="page-shares">
+        <div class="share-form">
+            <div class="card-header" style="margin-bottom:.75rem">
+                <div class="card-title"><i class="fa-solid fa-ghost"></i> Create Phantom Share Link</div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">File ID</label>
+                    <input class="form-input" id="share-file-id" placeholder="Paste file ID here…">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Expires In (hours)</label>
+                    <select class="form-select form-input" id="share-expires">
+                        <option value="1">1 hour</option>
+                        <option value="6">6 hours</option>
+                        <option value="24" selected>24 hours</option>
+                        <option value="48">48 hours</option>
+                        <option value="72">72 hours</option>
+                        <option value="168">7 days</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Max Downloads</label>
+                    <select class="form-select form-input" id="share-max">
+                        <option value="1" selected>1 (One-time)</option>
+                        <option value="3">3</option>
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom:.75rem">
+                <label class="form-label">Label (optional)</label>
+                <input class="form-input" id="share-label" placeholder="e.g. Shared with Project Team">
+            </div>
+            <button class="btn-sm btn-primary" onclick="createShareLink()">
+                <i class="fa-solid fa-ghost"></i> Generate Phantom Link
+            </button>
+            <div id="share-result" style="display:none"></div>
+        </div>
+
+        <div class="table-card">
+            <div class="table-toolbar">
+                <span style="font-size:.82rem;font-weight:600">Active Share Links</span>
+                <button class="btn-sm btn-ghost" onclick="loadShares()"><i class="fa-solid fa-rotate-right"></i></button>
+                <span class="table-count" id="share-count"></span>
+            </div>
+            <div style="overflow-x:auto">
+                <table class="data-table">
+                    <thead><tr>
+                        <th>Label</th><th>File</th><th>Status</th>
+                        <th>Downloads</th><th>Expires</th><th>Created</th><th>Actions</th>
+                    </tr></thead>
+                    <tbody id="shares-tbody">
+                        <tr><td colspan="7"><div class="loading-state"><i class="fa-solid fa-spinner spin"></i></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    </div><!-- /content -->
+</main>
+</div><!-- /shell -->
+
+<div id="toast-root"></div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────
+const API      = `http://${location.hostname}:8000/api`;
+const ADMIN_API= `${API}/admin`;
+let _token     = localStorage.getItem('pb_token');
+let _user      = null;
+try { _user = JSON.parse(localStorage.getItem('pb_user') || 'null'); } catch(e){}
+
+// ── Auth guard ───────────────────────────────────────────────
+if (!_token || !_user || _user.role !== 'Admin') {
+    window.location.replace('auth.html');
+}
+
+// ── Init ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    if (_user) {
+        document.getElementById('sidebar-avatar').textContent = (_user.first_name||'A')[0].toUpperCase();
+        document.getElementById('sidebar-name').textContent   = _user.first_name || _user.email;
+    }
+    setInterval(() => {
+        document.getElementById('topbar-time').textContent = new Date().toLocaleTimeString();
+    }, 1000);
+    loadDashboard();
+});
+
+window.pbLogout = () => {
+    ['pb_token','pb_user','pb_role','pb_loginAt'].forEach(k => localStorage.removeItem(k));
+    window.location.replace('auth.html');
+};
+
+// ── Helpers ──────────────────────────────────────────────────
+const headers = () => ({ 'Authorization': `Bearer ${_token}`, 'Content-Type': 'application/json' });
+const fmt = n => n >= 1e9 ? (n/1e9).toFixed(1)+'GB' : n >= 1e6 ? (n/1e6).toFixed(1)+'MB' : n >= 1024 ? (n/1024).toFixed(1)+'KB' : n+'B';
+const fmtDate = s => s ? new Date(s).toLocaleString() : '—';
+const trunc = (s, n=16) => s ? s.substring(0,n)+'…' : '—';
+
+function toast(msg, type='info') {
+    const el = document.createElement('div');
+    el.className = `toast-msg toast-${type}`;
+    const icons = {success:'fa-check-circle', error:'fa-circle-xmark', info:'fa-circle-info'};
+    el.innerHTML = `<i class="fa-solid ${icons[type]||icons.info}"></i>${msg}`;
+    document.getElementById('toast-root').appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+}
+
+async function apiFetch(url, opts={}) {
+    const res = await fetch(url, { headers: headers(), ...opts });
+    if (res.status === 401) { window.pbLogout(); return null; }
+    return res.json();
+}
+
+let currentPage = 'dashboard';
+const pageTitles = {
+    dashboard:'Dashboard', files:'All Files', users:'User Management',
+    audit:'Audit Logs', security:'Security Monitor', blockchain:'Blockchain',
+    shares:'Share Links'
+};
+
+function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(`page-${name}`)?.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => {
+        if (n.textContent.trim().toLowerCase().includes(name)) n.classList.add('active');
+    });
+    document.getElementById('topbar-title').textContent = pageTitles[name] || name;
+    currentPage = name;
+    const loaders = {
+        files: loadFiles, users: loadUsers, audit: loadAudit,
+        security: loadSecurity, blockchain: loadBlockchain, shares: loadShares
+    };
+    loaders[name]?.();
+}
+
+function refreshCurrentPage() {
+    const loaders = {
+        dashboard: loadDashboard, files: loadFiles, users: loadUsers,
+        audit: loadAudit, security: loadSecurity, blockchain: loadBlockchain,
+        shares: loadShares
+    };
+    loaders[currentPage]?.();
+    toast('Refreshed', 'info');
+}
+
+// ── Dashboard ────────────────────────────────────────────────
+async function loadDashboard() {
+    const data = await apiFetch(`${ADMIN_API}/stats`);
+    if (!data?.success) return;
+    const d = data;
+
+    document.getElementById('s-users').textContent   = d.users?.total ?? '—';
+    document.getElementById('s-files').textContent   = d.files?.total ?? '—';
+    document.getElementById('s-size').textContent    = fmt(d.files?.total_size||0);
+    document.getElementById('s-shares').textContent  = d.shares?.active ?? '—';
+    document.getElementById('s-nodes').textContent   = `${d.nodes_online}/${d.nodes_total}`;
+    document.getElementById('s-events').textContent  = d.audit?.total_events ?? '—';
+    document.getElementById('s-uploads24').textContent = d.files?.uploads_24h ?? '—';
+    document.getElementById('s-admins').textContent  = d.users?.by_role?.Admin ?? '0';
+
+    // Activity chart
+    const bars  = document.getElementById('activity-chart');
+    const lbls  = document.getElementById('activity-labels');
+    const chart = d.activity_chart || [];
+    if (chart.length) {
+        const max = Math.max(...chart.map(c => c.count), 1);
+        bars.innerHTML = chart.map(c => `
+            <div class="bar-wrap">
+                <div class="bar" style="height:${Math.max(4,(c.count/max)*72)}px"
+                     title="${c.day}: ${c.count} events"></div>
+                <span class="bar-label">${c.day.slice(5)}</span>
+            </div>`).join('');
+        lbls.innerHTML = '';
+    } else {
+        bars.innerHTML = '<div class="empty-state" style="padding:1rem"><p>No activity data</p></div>';
+    }
+
+    // Nodes
+    const nodesEl = document.getElementById('nodes-grid');
+    const nodeMap = [
+        {key:'genesis', name:'Genesis Node', port:'5001'},
+        {key:'peer',    name:'Peer Node',    port:'5002'},
+        {key:'noise_a', name:'Noise Node A', port:'9001'},
+        {key:'noise_b', name:'Noise Node B', port:'9002'},
+    ];
+    nodesEl.innerHTML = nodeMap.map(n => {
+        const online = d.nodes_online > nodeMap.indexOf(n);
+        return `<div class="node-row">
+            <span class="node-dot ${online?'dot-green':'dot-red'}"></span>
+            <span class="node-name">${n.name}</span>
+            <span class="node-port">:${n.port}</span>
+            <span class="node-status" style="color:${online?'var(--success)':'var(--danger)'}">
+                ${online?'Online':'Offline'}</span>
+        </div>`;
+    }).join('');
+
+    // Top uploaders
+    const tu = document.getElementById('top-uploaders').querySelector('tbody');
+    tu.innerHTML = (d.top_uploaders||[]).map(u => `
+        <tr>
+            <td class="mono" style="color:var(--primary)">${u.email}</td>
+            <td class="mono">${u.uploads}</td>
+            <td class="mono">${fmt(u.total_size||0)}</td>
+        </tr>`).join('') || '<tr><td colspan="3" class="empty-state"><p>No data</p></td></tr>';
+}
+
+// ── Files ────────────────────────────────────────────────────
+let _filesData = [];
+async function loadFiles() {
+    document.getElementById('files-tbody').innerHTML =
+        '<tr><td colspan="7"><div class="loading-state"><i class="fa-solid fa-spinner spin"></i><span>Loading…</span></div></td></tr>';
+    const data = await apiFetch(`${ADMIN_API}/files?limit=200`);
+    if (!data?.success) return;
+    _filesData = data.files || [];
+    renderFiles(_filesData);
+}
+function renderFiles(files) {
+    document.getElementById('file-count').textContent = `${files.length} files`;
+    const tbody = document.getElementById('files-tbody');
+    if (!files.length) {
+        tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-file-slash"></i><p>No files found</p></div></td></tr>';
+        return;
+    }
+    tbody.innerHTML = files.map(f => `
+        <tr>
+            <td><span class="truncate" title="${f.original_filename}">${f.original_filename||'—'}</span></td>
+            <td class="mono" style="color:var(--primary)">${trunc(f.file_id,14)}</td>
+            <td style="color:var(--soft)">${f.owner_email||'—'}</td>
+            <td class="mono">${fmt(f.file_size||0)}</td>
+            <td class="mono">${f.fragment_count||3}</td>
+            <td class="mono" style="color:var(--muted)">${fmtDate(f.upload_time)}</td>
+            <td><div class="action-row">
+                <button class="icon-btn icon-btn-blue" title="Share" onclick="quickShare('${f.file_id}')"><i class="fa-solid fa-share-nodes"></i></button>
+                <button class="icon-btn icon-btn-green" title="Download" onclick="adminDownload('${f.file_id}')"><i class="fa-solid fa-download"></i></button>
+            </div></td>
+        </tr>`).join('');
+}
+function filterFiles(q) {
+    const f = _filesData.filter(r =>
+        (r.original_filename||'').toLowerCase().includes(q.toLowerCase()) ||
+        (r.owner_email||'').toLowerCase().includes(q.toLowerCase())
+    );
+    renderFiles(f);
+}
+function quickShare(fileId) {
+    showPage('shares');
+    setTimeout(() => document.getElementById('share-file-id').value = fileId, 200);
+}
+async function adminDownload(fileId) {
+    toast('Requesting download…', 'info');
+    const res = await apiFetch(`${API}/request_download/${fileId}`);
+    if (res?.success) {
+        toast(`Reconstructed! Download token ready.`, 'success');
+        // Trigger actual file download
+        window.open(`${API}/download/${res.download_token}`, '_blank');
+    } else {
+        toast(res?.error || 'Download failed', 'error');
+    }
+}
+
+// ── Users ────────────────────────────────────────────────────
+let _usersData = [];
+async function loadUsers() {
+    document.getElementById('users-tbody').innerHTML =
+        '<tr><td colspan="7"><div class="loading-state"><i class="fa-solid fa-spinner spin"></i></div></td></tr>';
+    const data = await apiFetch(`${ADMIN_API}/users`);
+    if (!data?.success) return;
+    _usersData = data.users || [];
+    renderUsers(_usersData);
+}
+function renderUsers(users) {
+    document.getElementById('user-count').textContent = `${users.length} users`;
+    const tbody = document.getElementById('users-tbody');
+    tbody.innerHTML = users.map(u => `
+        <tr>
+            <td>
+                <div style="display:flex;align-items:center;gap:.6rem">
+                    <div style="width:28px;height:28px;border-radius:6px;
+                        background:linear-gradient(135deg,${u.role==='Admin'?'var(--warning),#b45309':'var(--primary),#1d4ed8'});
+                        display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem">
+                        ${(u.first_name||u.email)[0].toUpperCase()}
+                    </div>
+                    <div>
+                        <div style="font-size:.82rem;font-weight:600">${u.first_name||''} ${u.last_name||''}</div>
+                        <div style="font-size:.7rem;font-family:var(--mono);color:var(--muted)">${u.email}</div>
+                    </div>
+                </div>
+            </td>
+            <td><span class="badge ${u.role==='Admin'?'badge-yellow':'badge-blue'}">${u.role}</span></td>
+            <td class="mono">${u.file_count||0}</td>
+            <td class="mono">${fmt(u.total_size||0)}</td>
+            <td class="mono" style="color:var(--muted)">${u.last_login_at ? new Date(u.last_login_at).toLocaleDateString() : 'Never'}</td>
+            <td><span class="badge ${u.is_active?'badge-green':'badge-red'}">${u.is_active?'Active':'Inactive'}</span></td>
+            <td class="mono" style="color:var(--muted)">${u.last_activity ? new Date(u.last_activity).toLocaleDateString() : '—'}</td>
+        </tr>`).join('') || '<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-users-slash"></i><p>No users found</p></div></td></tr>';
+}
+function filterUsers(q) {
+    const f = _usersData.filter(u =>
+        (u.email||'').toLowerCase().includes(q.toLowerCase()) ||
+        (u.first_name||'').toLowerCase().includes(q.toLowerCase())
+    );
+    renderUsers(f);
+}
+
+// ── Audit Log ────────────────────────────────────────────────
+let _auditData = [];
+async function loadAudit() {
+    document.getElementById('audit-tbody').innerHTML =
+        '<tr><td colspan="6"><div class="loading-state"><i class="fa-solid fa-spinner spin"></i></div></td></tr>';
+    const action = document.getElementById('audit-action-filter').value;
+    const url = `${ADMIN_API}/audit?limit=200${action?'&action_type='+action:''}`;
+    const data = await apiFetch(url);
+    if (!data?.success) return;
+    _auditData = data.logs || [];
+    renderAudit(_auditData);
+}
+const actionColors = {
+    LOGIN_SUCCESS:'badge-green', LOGIN_FAILED:'badge-red', UPLOAD:'badge-blue',
+    DOWNLOAD:'badge-purple', DOWNLOAD_DENIED:'badge-red', REGISTER:'badge-green',
+    SHARE_CREATED:'badge-yellow', SHARE_DOWNLOAD:'badge-cyan', SHARE_REVOKED:'badge-red',
+    ACCOUNT_LOCKED:'badge-red',
+};
+function renderAudit(logs) {
+    document.getElementById('audit-count').textContent = `${logs.length} events`;
+    const tbody = document.getElementById('audit-tbody');
+    tbody.innerHTML = logs.map(l => `
+        <tr>
+            <td class="mono" style="color:var(--muted);white-space:nowrap">${fmtDate(l.timestamp)}</td>
+            <td><span class="badge ${actionColors[l.action_type]||'badge-muted'}">${l.action_type||'—'}</span></td>
+            <td style="color:var(--soft)">${l.user_email||'—'}</td>
+            <td class="mono" style="color:var(--primary)">${l.file_id?trunc(l.file_id,12):'—'}</td>
+            <td class="mono" style="color:var(--muted)">${l.ip_address||'—'}</td>
+            <td style="color:var(--soft);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                title="${l.details||''}">${l.details||'—'}</td>
+        </tr>`).join('') || '<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-scroll"></i><p>No log entries</p></div></td></tr>';
+}
+function filterAudit(q) {
+    const f = _auditData.filter(l => (l.user_email||'').toLowerCase().includes(q.toLowerCase()));
+    renderAudit(f);
+}
+
+// ── Security ─────────────────────────────────────────────────
+async function loadSecurity() {
+    const data = await apiFetch(`${ADMIN_API}/security`);
+    if (!data?.success) return;
+
+    document.getElementById('sec-locked').textContent = (data.locked_accounts||[]).length;
+    document.getElementById('sec-fails').textContent  = (data.failed_logins||[]).length;
+    document.getElementById('sec-denied').textContent = (data.denied_downloads||[]).length;
+
+    // Locked accounts
+    const lockedEl = document.getElementById('locked-accounts-list');
+    lockedEl.innerHTML = (data.locked_accounts||[]).map(a => `
+        <div class="alert-item">
+            <i class="fa-solid fa-lock alert-icon" style="color:var(--danger)"></i>
+            <div class="alert-msg"><strong>${a.email}</strong> — ${a.failed_login_attempts} failed attempts</div>
+        </div>`).join('') || '<div class="empty-state"><i class="fa-solid fa-check-circle" style="color:var(--success)"></i><p>No locked accounts</p></div>';
+
+    // Failed logins
+    const failsEl = document.getElementById('failed-logins-list');
+    failsEl.innerHTML = (data.failed_logins||[]).slice(0,8).map(f => `
+        <div class="alert-item warn">
+            <i class="fa-solid fa-triangle-exclamation alert-icon" style="color:var(--warning)"></i>
+            <div class="alert-msg">${f.user_email||f.ip_address||'Unknown'}</div>
+            <span class="alert-time">${fmtDate(f.timestamp)}</span>
+        </div>`).join('') || '<div class="empty-state"><p>No recent failures</p></div>';
+
+    // Denied downloads
+    const deniedEl = document.getElementById('denied-list');
+    deniedEl.innerHTML = (data.denied_downloads||[]).slice(0,8).map(d => `
+        <div class="alert-item">
+            <i class="fa-solid fa-ban alert-icon" style="color:var(--danger)"></i>
+            <div class="alert-msg">${d.user_email||'?'} → ${d.file_id?trunc(d.file_id,12):''}</div>
+            <span class="alert-time">${fmtDate(d.timestamp)}</span>
+        </div>`).join('') || '<div class="empty-state"><p>No denied downloads</p></div>';
+
+    // Nodes
+    const nodesEl = document.getElementById('sec-nodes');
+    const nodeLabels = {genesis:'Genesis :5001', peer:'Peer :5002', noise_a:'Noise A :9001', noise_b:'Noise B :9002'};
+    nodesEl.innerHTML = Object.entries(data.nodes||{}).map(([k,v]) => `
+        <div class="node-row">
+            <span class="node-dot ${v.online?'dot-green':'dot-red'}"></span>
+            <span class="node-name">${nodeLabels[k]||k}</span>
+            <span class="node-status" style="color:${v.online?'var(--success)':'var(--danger)'}">${v.online?'Online':'Offline'}</span>
+        </div>`).join('');
+
+    // Show badge if threats
+    const threats = (data.locked_accounts||[]).length + (data.denied_downloads||[]).length;
+    const badge = document.getElementById('badge-threats');
+    if (badge) badge.style.display = threats > 0 ? '' : 'none';
+}
+
+// ── Blockchain ───────────────────────────────────────────────
+async function loadBlockchain() {
+    const data = await apiFetch(`${ADMIN_API}/blockchain`);
+    if (!data?.success) return;
+
+    document.getElementById('bc-length').textContent  = data.chain_length ?? '—';
+    document.getElementById('bc-regs').textContent    = (data.registrations||[]).length;
+    document.getElementById('bc-genesis').textContent = data.genesis_hash || '—';
+
+    // Chain viz (show all blocks schematically)
+    const viz = document.getElementById('chain-viz');
+    viz.innerHTML = [...(data.registrations||[])].reverse().map(b => `
+        <div class="block-card">
+            <div class="block-num block-file">#${b.index}</div>
+            <div class="block-info">
+                <div class="block-type"><i class="fa-solid fa-file-shield" style="color:var(--primary)"></i> FILE_REGISTRATION</div>
+                <div class="block-hash mono">${b.hash}</div>
+            </div>
+            <div class="block-time">${new Date(b.timestamp*1000).toLocaleTimeString()}</div>
+        </div>`).join('') || '<div class="empty-state"><p>No file registrations yet</p></div>';
+
+    // Registrations table
+    const tbody = document.getElementById('bc-regs-tbody');
+    tbody.innerHTML = (data.registrations||[]).map(r => `
+        <tr>
+            <td class="mono" style="color:var(--primary)">#${r.index}</td>
+            <td class="mono" style="color:var(--cyan)">${trunc(r.file_id,16)}</td>
+            <td class="mono" style="color:var(--muted)">${r.file_hash}</td>
+            <td class="mono">${r.fragments||3}</td>
+            <td class="mono" style="color:var(--muted)">${trunc(r.owner_id,12)}</td>
+            <td class="mono" style="color:var(--muted)">${new Date(r.timestamp*1000).toLocaleString()}</td>
+        </tr>`).join('') || '<tr><td colspan="6"><div class="empty-state"><p>No registrations</p></div></td></tr>';
+}
+
+// ── Share Links ───────────────────────────────────────────────
+async function loadShares() {
+    document.getElementById('shares-tbody').innerHTML =
+        '<tr><td colspan="7"><div class="loading-state"><i class="fa-solid fa-spinner spin"></i></div></td></tr>';
+    const data = await apiFetch(`${API}/share/list`);
+    if (!data?.success) return;
+    const links = data.links || [];
+    document.getElementById('share-count').textContent = `${links.length} links`;
+    const tbody = document.getElementById('shares-tbody');
+    tbody.innerHTML = links.map(l => {
+        const active  = l.is_active;
+        const timeLeft = l.time_left > 0 ? formatTime(l.time_left) : 'Expired';
+        return `<tr>
+            <td style="font-weight:600">${l.label||'—'}</td>
+            <td class="mono" style="color:var(--primary)">${trunc(l.original_filename||l.file_id,18)}</td>
+            <td><span class="badge ${active?'badge-green':'badge-red'}">${active?'Active':'Dead'}</span></td>
+            <td class="mono">${l.download_count}/${l.max_downloads}</td>
+            <td class="mono" style="color:${active?'var(--warning)':'var(--muted)'}">${timeLeft}</td>
+            <td class="mono" style="color:var(--muted)">${fmtDate(l.created_at)}</td>
+            <td><div class="action-row">
+                ${active ? `<button class="icon-btn icon-btn-blue" title="Copy link" onclick="copyShareLink('${l.token}')"><i class="fa-solid fa-copy"></i></button>
+                <button class="icon-btn icon-btn-red" title="Revoke" onclick="revokeLink('${l.id}')"><i class="fa-solid fa-trash"></i></button>` : '—'}
+            </div></td>
+        </tr>`;
+    }).join('') || '<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-ghost"></i><p>No share links yet</p></div></td></tr>';
+}
+
+async function createShareLink() {
+    const fileId   = document.getElementById('share-file-id').value.trim();
+    const expires  = parseInt(document.getElementById('share-expires').value);
+    const maxDl    = parseInt(document.getElementById('share-max').value);
+    const label    = document.getElementById('share-label').value.trim();
+    if (!fileId) { toast('Please enter a File ID', 'error'); return; }
+
+    const res = await apiFetch(`${API}/share/create`, {
+        method: 'POST',
+        body: JSON.stringify({ file_id: fileId, expires_in_hours: expires, max_downloads: maxDl, label })
+    });
+    if (!res?.success) { toast(res?.error || 'Failed to create share link', 'error'); return; }
+
+    const shareUrl = res.share_url;
+    const resultDiv = document.getElementById('share-result');
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `
+        <div class="share-result">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+                <strong style="color:var(--success)"><i class="fa-solid fa-ghost"></i> Phantom Link Created</strong>
+                <span class="badge badge-yellow">${expires}h · ${maxDl} download${maxDl>1?'s':''}</span>
+            </div>
+            <div class="share-url">${shareUrl}</div>
+            <div style="display:flex;gap:.5rem;margin-top:.5rem">
+                <button class="btn-sm btn-primary" onclick="navigator.clipboard.writeText('${shareUrl}').then(()=>toast('Copied!','success'))">
+                    <i class="fa-solid fa-copy"></i> Copy Link
+                </button>
+                <button class="btn-sm btn-ghost" onclick="document.getElementById('share-result').style.display='none'">
+                    Dismiss
+                </button>
+            </div>
+        </div>`;
+    toast('Phantom share link created!', 'success');
+    loadShares();
+}
+
+async function revokeLink(shareId) {
+    if (!confirm('Destroy this share link? This cannot be undone.')) return;
+    const res = await apiFetch(`${API}/share/${shareId}`, { method: 'DELETE' });
+    if (res?.success) { toast('Share link destroyed.', 'success'); loadShares(); }
+    else toast(res?.error || 'Failed to revoke', 'error');
+}
+function copyShareLink(token) {
+    const url = `http://${location.hostname}:8000/share/${token}`;
+    navigator.clipboard.writeText(url).then(() => toast('Link copied!', 'success'));
+}
+function formatTime(secs) {
+    if (secs < 3600) return `${Math.floor(secs/60)}m`;
+    if (secs < 86400) return `${Math.floor(secs/3600)}h`;
+    return `${Math.floor(secs/86400)}d`;
+}
+</script>
+</body>
+</html>

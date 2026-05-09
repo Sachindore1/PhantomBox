@@ -1,0 +1,10 @@
+{
+  "file_id": "ccbd3b05bf7ae472_1776698386",
+  "fragment_index": 2,
+  "cipher_hash": "fc9c70f0f21827d44c91f9245901cccabd93132079040d1844f818538f2fa42c",
+  "expected_hash": "fc9c70f0f21827d44c91f9245901cccabd93132079040d1844f818538f2fa42c",
+  "encryption": "AES-256-GCM",
+  "size_bytes": 121855,
+  "timestamp": "2026-04-20T20:49:46.714579",
+  "node": "noise_storage_A"
+}

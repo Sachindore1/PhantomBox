@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhantomBox | Secure Distributed Storage</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ALL YOUR EXISTING CSS STAYS EXACTLY THE SAME */
+        :root {
+            --bg-dark: #0a0e1a;
+            --bg-panel: #141b2b;
+            --bg-sidebar: #0f1522;
+            --primary: #2a7de1;
+            --primary-dark: #1a5cb0;
+            --primary-glow: rgba(42, 125, 225, 0.3);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #1e293b;
+            --card-bg: #1e293b;
+            --hover-bg: #2d3a4f;
+            --font-ui: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-ui);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100%;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, var(--bg-sidebar) 0%, #0a0f1a 100%);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 1.5rem;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .brand {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 2.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            letter-spacing: -0.5px;
+        }
+
+        .brand i {
+            font-size: 2rem;
+            text-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .nav-menu {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .nav-item {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 1rem 1.25rem;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .nav-item:hover {
+            background: rgba(42, 125, 225, 0.15);
+            color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(42, 125, 225, 0.2), transparent);
+            color: var(--primary);
+            border-left: 4px solid var(--primary);
+        }
+
+        .system-status {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 1.25rem;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--success);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: var(--success);
+            border-radius: 50%;
+            display: block;
+        }
+
+        .pulse {
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse 2s infinite;
+        }
+
+        .node-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .node-info small {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 2rem 2.5rem;
+            overflow-y: auto;
+            position: relative;
+            background: radial-gradient(circle at 10% 20%, rgba(42, 125, 225, 0.03), transparent 40%);
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .view-section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-header h2 {
+            font-size: 1.85rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #fff, var(--text-muted));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .date-badge {
+            background: var(--bg-panel);
+            padding: 0.5rem 1.25rem;
+            border-radius: 30px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-panel);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border-color: var(--primary);
+        }
+
+        .icon-box {
+            width: 55px;
+            height: 55px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+        }
+
+        .blue { background: rgba(42, 125, 225, 0.15); color: var(--primary); }
+        .purple { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+        .green { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .red { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+        .stat-info h3 {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-info p {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-top: 0.25rem;
+            font-family: var(--font-mono);
+        }
+
+        /* Terminal */
+        .panel-full {
+            background: var(--bg-panel);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 1.75rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .terminal-window {
+            background: #0a0c12;
+            border-radius: 10px;
+            padding: 1.25rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            height: 300px;
+            overflow-y: auto;
+            margin-top: 1.25rem;
+            border: 1px solid #1e293b;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .log-line {
+            margin-bottom: 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 4px;
+            color: #cbd5e1;
+        }
+
+        .ts {
+            color: var(--success);
+            margin-right: 12px;
+            font-weight: 600;
+        }
+
+        /* Upload Section */
+        .split-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1.8fr;
+            gap: 2rem;
+        }
+
+        .panel {
+            background: var(--bg-panel);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.02);
+        }
+
+        .drop-zone:hover {
+            border-color: var(--primary);
+            background: rgba(42, 125, 225, 0.05);
+            transform: scale(1.02);
+        }
+
+        .drop-zone i {
+            font-size: 3.5rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .drop-zone h3 {
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .drop-zone p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .action-btn:disabled {
+            background: var(--border);
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px var(--primary-glow);
+        }
+
+        .action-btn.secondary {
+            background: var(--border);
+        }
+
+        .action-btn.secondary:hover {
+            background: #2d3a4f;
+        }
+
+        .file-preview {
+            background: rgba(255,255,255,0.05);
+            padding: 1.25rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .file-preview i {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .file-preview span {
+            flex: 1;
+        }
+
+        .close-preview {
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+
+        .close-preview:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .hidden { display: none !important; }
+
+        /* Process Steps */
+        .process-steps {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            border-color: var(--primary);
+            background: rgba(42, 125, 225, 0.1);
+            transform: translateX(5px);
+        }
+
+        .step.completed {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .step-icon {
+            width: 45px;
+            height: 45px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+        }
+
+        .step.active .step-icon {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .step.completed .step-icon {
+            background: var(--success);
+            color: white;
+        }
+
+        .step-content h4 {
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+            color: var(--text-main);
+        }
+
+        .step-content p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .step-status {
+            margin-left: auto;
+            font-size: 1.2rem;
+        }
+
+        .step.active .step-status::after {
+            content: '\f1ce';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            animation: spin 1.5s infinite linear;
+            color: var(--primary);
+        }
+
+        .step.completed .step-status::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            color: var(--success);
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* History Tables */
+        .history-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .history-section {
+            background: var(--bg-panel);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .history-header h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.1rem;
+            color: var(--text-main);
+        }
+
+        .history-header h3 i {
+            color: var(--primary);
+        }
+
+        .history-count {
+            background: var(--border);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .history-table th {
+            text-align: left;
+            padding: 1rem 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .history-table td {
+            padding: 1rem 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem;
+        }
+
+        .history-table tr {
+            transition: background 0.3s;
+            cursor: pointer;
+        }
+
+        .history-table tr:hover {
+            background: var(--hover-bg);
+        }
+
+        .file-id-cell {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--primary);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-verified {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .copy-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .download-btn {
+            background: transparent;
+            border: 1px solid var(--success);
+            color: var(--success);
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .download-btn:hover {
+            background: var(--success);
+            color: white;
+        }
+
+        .empty-history {
+            padding: 3rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-history i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Download Ready Card */
+        .download-card {
+            margin-top: 1.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            padding: 2rem;
+            border-radius: 16px;
+            text-align: center;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .success-icon {
+            font-size: 3.5rem;
+            color: var(--success);
+            margin-bottom: 1rem;
+        }
+
+        .file-details {
+            margin: 1.5rem 0;
+            font-family: var(--font-mono);
+            background: rgba(0,0,0,0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            color: var(--text-muted);
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: white;
+            border-radius: 12px;
+            font-family: var(--font-mono);
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background: var(--bg-panel);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .icon-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .fa-spin {
+            animation: spin 1s infinite linear;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--bg-panel);
+            border-left: 4px solid var(--success);
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 1000;
+            animation: slideRight 0.3s ease;
+            border: 1px solid var(--border);
+        }
+
+        .toast i {
+            color: var(--success);
+            font-size: 1.2rem;
+        }
+
+        @keyframes slideRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-dark);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            border: 1px solid var(--border);
+            margin-bottom: 5px;
+            z-index: 1000;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .split-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-ghost"></i>
+                <span>PhantomBox</span>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-item active" onclick="switchView('dashboard')">
+                    <i class="fa-solid fa-chart-line"></i> Dashboard
+                </button>
+                <button class="nav-item" onclick="switchView('upload')">
+                    <i class="fa-solid fa-shield-halved"></i> Secure Upload
+                </button>
+                <button class="nav-item" onclick="switchView('download')">
+                    <i class="fa-solid fa-file-arrow-down"></i> Retrieval
+                </button>
+                <button class="nav-item" onclick="switchView('history')">
+                    <i class="fa-solid fa-clock-rotate-left"></i> History
+                </button>
+                <button class="nav-item" onclick="switchView('ledger')">
+                    <i class="fa-solid fa-link"></i> Audit Ledger
+                </button>
+            </nav>
+
+            <div class="system-status">
+    <div class="status-indicator">
+        <span class="dot pulse"></span>
+        <span class="text">Infrastructure Status</span>
+    </div>
+    <div class="node-info">
+        <small><span>🟢 PhantomBox UI:</span> <span style="color: var(--success);">Running</span></small>
+        <small><span>Genesis Node:</span> <span id="genesis-status">Checking...</span></small>
+        <small><span>Peer Node:</span> <span id="peer-status">Checking...</span></small>
+        <small><span>Noise Node A:</span> <span id="noiseA-status">Checking...</span></small>
+        <small><span>Noise Node B:</span> <span id="noiseB-status">Checking...</span></small>
+        <small><span>Memory:</span> <span id="memory-status">0 B</span></small>
+    </div>
+</div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <section id="view-dashboard" class="view-section active">
+                <header class="section-header">
+                    <h2>Network Overview</h2>
+                    <span class="date-badge" id="current-time">--:--:--</span>
+                </header>
+
+                
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="icon-box blue"><i class="fa-solid fa-cubes"></i></div>
+                        <div class="stat-info">
+                            <h3>Blockchain Height</h3>
+                            <p id="stat-blocks">Syncing...</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon-box purple"><i class="fa-solid fa-file-shield"></i></div>
+                        <div class="stat-info">
+                            <h3>Secured Assets</h3>
+                            <p id="stat-files">Syncing...</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon-box green"><i class="fa-solid fa-server"></i></div>
+                        <div class="stat-info">
+                            <h3>Active Nodes</h3>
+                            <p id="stat-nodes">4 Nodes</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon-box red"><i class="fa-solid fa-memory"></i></div>
+                        <div class="stat-info">
+                            <h3>RAM Usage</h3>
+                            <p id="stat-memory">0 MB</p>
+                        </div>
+                    </div>
+                </div>
+                
+
+                
+                <div class="panel-full">
+                    <h3 style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="fa-solid fa-terminal" style="color: var(--primary);"></i> 
+                        Live Security Events
+                    </h3>
+                    <div class="terminal-window" id="global-log">
+                        <div class="log-line"><span class="ts">[SYSTEM]</span> Initializing PhantomBox Distributed Protocol v3.0...</div>
+                        <div class="log-line"><span class="ts">[NET]</span> Peering with Genesis Node... OK</div>
+                        <div class="log-line"><span class="ts">[CRYPTO]</span> Hologram Noise Generator ready (3 fragments, 2-of-3 threshold)</div>
+                        <div class="log-line"><span class="ts">[DIST]</span> Distributed VM mode active</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Upload View -->
+            <section id="view-upload" class="view-section">
+                <header class="section-header">
+                    <h2>Secure Data Ingestion</h2>
+                </header>
+
+                <div class="split-layout">
+                    <!-- Left Panel - Upload Controls -->
+                    <div class="panel">
+                        <div class="drop-zone" id="drop-zone">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <h3>Drag & Drop or Click to Upload</h3>
+                            <p>Max Size: 10MB • 2-of-3 Hologram Sharding</p>
+                            <input type="file" id="file-input" hidden>
+                        </div>
+                        
+                        <div id="file-preview" class="file-preview hidden">
+                            <i class="fa-solid fa-file"></i>
+                            <div style="flex: 1; overflow: hidden;">
+                                <div id="preview-name" style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">filename.docx</div>
+                                <div id="preview-size" style="font-size: 0.8rem; color: var(--text-muted);">0 KB</div>
+                            </div>
+                            <i class="fa-solid fa-xmark close-preview" onclick="resetUpload()" style="cursor: pointer; padding: 0.5rem;"></i>
+                        </div>
+                        
+                        <button id="btn-encrypt" class="action-btn" disabled>
+                            <i class="fa-solid fa-lock"></i> Encrypt & Disperse
+                        </button>
+
+                        <!-- Recent Uploads History -->
+                        <div style="margin-top: 2rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <h4 style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fa-solid fa-clock-rotate-left" style="color: var(--primary);"></i>
+                                    Recent Uploads
+                                </h4>
+                                <span class="history-count" id="upload-count">0 files</span>
+                            </div>
+                            <div id="upload-history-list" style="max-height: 300px; overflow-y: auto;">
+                                <div class="empty-history">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                    <p>No upload history yet</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel - Process Visualizer -->
+                    <div class="panel visualizer-panel">
+                        <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                            <i class="fa-solid fa-microchip" style="color: var(--primary);"></i>
+                            Hologram Noise Process
+                        </h3>
+                        <div class="process-steps" id="upload-steps">
+                            <div class="step" id="step-hash">
+                                <div class="step-icon"><i class="fa-solid fa-fingerprint"></i></div>
+                                <div class="step-content">
+                                    <h4>SHA-256 Hashing</h4>
+                                    <p>Generating unique file fingerprint</p>
+                                </div>
+                                <div class="step-status"></div>
+                            </div>
+                            <div class="step" id="step-sharding">
+                                <div class="step-icon"><i class="fa-solid fa-scissors"></i></div>
+                                <div class="step-content">
+                                    <h4>Hologram Noise Sharding</h4>
+                                    <p>Converting to 3 meaningless fragments</p>
+                                </div>
+                                <div class="step-status"></div>
+                            </div>
+                            <div class="step" id="step-distribute">
+                                <div class="step-icon"><i class="fa-solid fa-network-wired"></i></div>
+                                <div class="step-content">
+                                    <h4>Distributed Storage</h4>
+                                    <p>Dispersing to Noise Nodes A & B</p>
+                                </div>
+                                <div class="step-status"></div>
+                            </div>
+                            <div class="step" id="step-blockchain">
+                                <div class="step-icon"><i class="fa-brands fa-hive"></i></div>
+                                <div class="step-content">
+                                    <h4>Blockchain Registration</h4>
+                                    <p>Minting immutable metadata</p>
+                                </div>
+                                <div class="step-status"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Upload Result -->
+                        <div id="upload-result" style="display: none; margin-top: 1.5rem; padding: 1rem; border-radius: 12px;" class="hidden"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Download View -->
+            <!-- Download View -->
+<section id="view-download" class="view-section">
+    <header class="section-header">
+        <h2>Ephemeral Retrieval</h2>
+    </header>
+
+    <div class="split-layout">
+        <!-- Left Panel - Download Controls -->
+        <div class="panel">
+            <div class="input-group">
+                <label><i class="fa-solid fa-key"></i> File ID / Transaction Hash</label>
+                <input type="text" id="file-id-input" placeholder="Enter File ID (e.g. 8f4a2c...)" value="">
+                <small style="display: block; margin-top: 0.5rem; color: var(--text-muted);">
+                    <i class="fa-solid fa-info-circle"></i> Enter the File ID from upload history
+                </small>
+            </div>
+            
+            <button class="action-btn secondary" onclick="requestDownload()" style="margin-bottom: 1rem;">
+                <i class="fa-solid fa-search"></i> Locate & Reconstruct
+            </button>
+            
+            <!-- 🔐 NEW SECURE PREVIEW BUTTON -->
+            <button class="action-btn" onclick="window.previewFile()" style="background: var(--primary); margin-top: 0;">
+                <i class="fa-solid fa-eye"></i> Secure Preview (60s TTL • One-time)
+            </button>
+            <!-- ============================== -->
+
+            <!-- Download Ready Card (Hidden by default) -->
+            <div id="download-ready-card" class="download-card hidden">
+                <div class="success-icon"><i class="fa-solid fa-check-circle"></i></div>
+                <h3 style="margin-bottom: 0.5rem;">Reconstruction Complete</h3>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">File exists in RAM • Destroys on download</p>
+                <div class="file-details" id="download-details">
+                    <span id="dl-filename">report.pdf</span> • <span id="dl-size">2.4 MB</span>
+                </div>
+                <button id="btn-download-final" class="action-btn">
+                    <i class="fa-solid fa-download"></i> Download to Device
+                </button>
+            </div>
+
+            <!-- Recent Downloads History -->
+            <div style="margin-top: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h4 style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-clock-rotate-left" style="color: var(--success);"></i>
+                        Recent Downloads
+                    </h4>
+                    <span class="history-count" id="download-count">0 files</span>
+                </div>
+                <div id="download-history-list" style="max-height: 300px; overflow-y: auto;">
+                    <div class="empty-history">
+                        <i class="fa-solid fa-file-arrow-down"></i>
+                        <p>No download history yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Reconstruction Visualizer -->
+        <div class="panel visualizer-panel">
+            <h3 style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                <i class="fa-solid fa-diagram-project" style="color: var(--success);"></i>
+                Reconstruction Logic
+            </h3>
+            
+            <!-- 🔧 FIXED: Added missing progress bar -->
+            <div id="download-progress" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                    <i class="fa-solid fa-circle-notch fa-spin" style="color: var(--primary);"></i>
+                    <span class="progress-text" style="font-weight: 500;">Processing...</span>
+                </div>
+                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                    <div style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--success)); transition: width 0.3s ease;" id="progress-fill-download"></div>
+                </div>
+            </div>
+            <!-- ==================================== -->
+            
+            <div class="process-steps" id="download-steps">
+                <div class="step" id="step-verify">
+                    <div class="step-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+                    <div class="step-content">
+                        <h4>Blockchain Verification</h4>
+                        <p>Validating file metadata on ledger</p>
+                    </div>
+                    <div class="step-status"></div>
+                </div>
+                <div class="step" id="step-fetch">
+                    <div class="step-icon"><i class="fa-solid fa-download"></i></div>
+                    <div class="step-content">
+                        <h4>Fragment Retrieval</h4>
+                        <p>Fetching noise from distributed nodes</p>
+                    </div>
+                    <div class="step-status"></div>
+                </div>
+                <div class="step" id="step-combine">
+                    <div class="step-icon"><i class="fa-solid fa-object-group"></i></div>
+                    <div class="step-content">
+                        <h4>Hologram Fusion</h4>
+                        <p>Reconstructing original file in RAM</p>
+                    </div>
+                    <div class="step-status"></div>
+                </div>
+            </div>
+            
+            <!-- Download Result -->
+            <div id="download-result" style="display: none; margin-top: 1.5rem; padding: 1rem; border-radius: 12px;" class="hidden"></div>
+        </div>
+    </div>
+</section>
+
+            <!-- History View -->
+            <section id="view-history" class="view-section">
+                <header class="section-header">
+                    <h2>Complete File History</h2>
+                    <button class="icon-btn" onclick="refreshHistory()" data-tooltip="Refresh">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </header>
+
+                <div class="history-container">
+                    <!-- Upload History Full Table -->
+                    <div class="history-section">
+                        <div class="history-header">
+                            <h3>
+                                <i class="fa-solid fa-cloud-upload-alt" style="color: var(--primary);"></i>
+                                Upload History
+                            </h3>
+                            <span class="history-count" id="total-upload-count">0 files</span>
+                        </div>
+                        <div style="max-height: 300px; overflow-y: auto;">
+                            <table class="history-table" id="upload-history-table">
+                                <thead>
+                                    <tr>
+                                        <th>File Name</th>
+                                        <th>File ID</th>
+                                        <th>Size</th>
+                                        <th>Date & Time</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="upload-history-body">
+                                    <tr>
+                                        <td colspan="6" class="empty-history">
+                                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                                            <p>No upload history available</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Download History Full Table -->
+                    <div class="history-section">
+                        <div class="history-header">
+                            <h3>
+                                <i class="fa-solid fa-cloud-download-alt" style="color: var(--success);"></i>
+                                Download History
+                            </h3>
+                            <span class="history-count" id="total-download-count">0 files</span>
+                        </div>
+                        <div style="max-height: 300px; overflow-y: auto;">
+                            <table class="history-table" id="download-history-table">
+                                <thead>
+                                    <tr>
+                                        <th>File Name</th>
+                                        <th>File ID</th>
+                                        <th>Size</th>
+                                        <th>Date & Time</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="download-history-body">
+                                    <tr>
+                                        <td colspan="6" class="empty-history">
+                                            <i class="fa-solid fa-file-arrow-down"></i>
+                                            <p>No download history available</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Ledger View -->
+            <section id="view-ledger" class="view-section">
+                <header class="section-header">
+                    <h2>Immutable Audit Ledger</h2>
+                    <button class="icon-btn" onclick="refreshLedger()" data-tooltip="Refresh">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </header>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Block #</th>
+                                <th>Type</th>
+                                <th>Hash</th>
+                                <th>File ID</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledger-body">
+                            <tr>
+                                <td colspan="5" class="empty-history">
+                                    <i class="fa-solid fa-link"></i>
+                                    <p>Loading blockchain data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" style="position: fixed; bottom: 30px; right: 30px; z-index: 9999;"></div>
+
+        <!-- ========== SCRIPTS LOADED IN CORRECT ORDER ========== -->
+         
+    <script src="auth-guard.js"></script>
+    <!-- 1. History module - MUST load first and attach to window IMMEDIATELY -->
+    <script src="history.js"></script>
+    
+    <!-- 2. App core - Depends on history -->
+    <script src="app.js"></script>
+    
+    <!-- 3. Feature modules - Depend on both history and app -->
+    <script src="upload.js"></script>
+    <script src="download.js"></script>
+    
+    <!-- 4. Optional modules - Load last -->
+    <script src="lifecycle.js"></script>
+    <script src="metrics.js"></script>
+    <script src="explorer.js"></script>
+    
+        <!-- ========== SIMPLE VERIFICATION ========== -->
+    <script>
+        // Simple verification
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 Final verification...');
+            
+            // Check if historyManager exists
+            if (window.historyManager) {
+                console.log('✅ historyManager is available');
+                // Force UI update
+                setTimeout(() => {
+                    if (window.historyManager.updateUploadHistoryUI) {
+                        window.historyManager.updateUploadHistoryUI();
+                        window.historyManager.updateDownloadHistoryUI();
+                    }
+                }, 100);
+            } else {
+                console.error('❌ historyManager not found!');
+            }
+            
+            // Fix download button
+            
+            
+            console.log('✅ PhantomBox ready');
+        });
+    </script>
+</body>
+</html>
+

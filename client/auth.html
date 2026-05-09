@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhantomBox | Access Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-void: #070a12; --bg-panel: #111827; --bg-card: #141e30;
+            --primary: #2a7de1; --primary-glow: rgba(42,125,225,0.4);
+            --success: #0fba81; --danger: #f04b4b; --warning: #f5a623;
+            --text-main: #e8edf5; --text-muted: #64748b; --text-soft: #94a3b8;
+            --border: rgba(255,255,255,0.07); --border-focus: rgba(42,125,225,0.5);
+            --grid-color: rgba(42,125,225,0.04);
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        html,body{height:100%;font-family:'Syne',sans-serif;background:var(--bg-void);color:var(--text-main);overflow:hidden}
+        .grid-overlay{position:fixed;inset:0;z-index:0;background-image:linear-gradient(var(--grid-color) 1px,transparent 1px),linear-gradient(90deg,var(--grid-color) 1px,transparent 1px);background-size:48px 48px;pointer-events:none}
+        .glow-spot{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0}
+        .glow-1{width:600px;height:600px;background:radial-gradient(circle,rgba(42,125,225,0.12) 0%,transparent 70%);top:-200px;left:-100px;animation:driftA 18s ease-in-out infinite}
+        .glow-2{width:500px;height:500px;background:radial-gradient(circle,rgba(15,186,129,0.08) 0%,transparent 70%);bottom:-150px;right:-100px;animation:driftB 22s ease-in-out infinite}
+        @keyframes driftA{0%,100%{transform:translate(0,0)}50%{transform:translate(60px,40px)}}
+        @keyframes driftB{0%,100%{transform:translate(0,0)}50%{transform:translate(-50px,-60px)}}
+        .page{position:relative;z-index:1;height:100vh;display:grid;grid-template-columns:1fr 1fr}
+
+        /* LEFT PANEL */
+        .left-panel{display:flex;flex-direction:column;justify-content:space-between;padding:3rem 3.5rem;border-right:1px solid var(--border);position:relative;overflow:hidden}
+        .brand{display:flex;align-items:center;gap:1rem}
+        .brand-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--primary),#1a5cb0);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 0 20px var(--primary-glow)}
+        .brand-name{font-size:1.4rem;font-weight:800;letter-spacing:-0.5px;background:linear-gradient(90deg,#fff,#4f9ef8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .brand-tag{font-size:.65rem;font-family:'Space Mono',monospace;color:var(--primary);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+        .hero{flex:1;display:flex;flex-direction:column;justify-content:center;padding:2rem 0}
+        .hero-eyebrow{font-family:'Space Mono',monospace;font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--primary);margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem}
+        .hero-eyebrow::before{content:'';display:block;width:30px;height:1px;background:var(--primary)}
+        .hero-title{font-size:clamp(2rem,3.5vw,3rem);font-weight:800;line-height:1.05;letter-spacing:-2px;margin-bottom:1.5rem}
+        .hero-title .ghost{display:block;color:var(--text-soft)}
+        .hero-title .solid{display:block;color:#fff}
+        .hero-desc{font-size:.9rem;color:var(--text-soft);line-height:1.7;max-width:400px;margin-bottom:3rem}
+        .feature-list{display:flex;flex-direction:column;gap:1rem}
+        .feature-item{display:flex;align-items:center;gap:1rem}
+        .feature-dot{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+        .fd-blue{background:rgba(42,125,225,0.15);color:var(--primary)}
+        .fd-green{background:rgba(15,186,129,0.15);color:var(--success)}
+        .fd-orange{background:rgba(245,166,35,0.15);color:var(--warning)}
+        .feature-text strong{display:block;font-size:.88rem;font-weight:600;color:var(--text-main);margin-bottom:2px}
+        .feature-text span{font-size:.78rem;color:var(--text-muted)}
+        .left-footer{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--text-muted);display:flex;align-items:center;gap:1rem}
+        .status-dot{width:6px;height:6px;border-radius:50%;background:var(--success);animation:pulseDot 2s infinite}
+        @keyframes pulseDot{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(15,186,129,0.5)}50%{box-shadow:0 0 0 5px rgba(15,186,129,0)}}
+
+        /* RIGHT PANEL */
+        .right-panel{display:flex;align-items:center;justify-content:center;padding:2rem;overflow-y:auto}
+        .auth-card{width:100%;max-width:430px}
+        .tab-switcher{display:flex;background:var(--bg-panel);border:1px solid var(--border);border-radius:14px;padding:5px;margin-bottom:2.5rem}
+        .tab-btn{flex:1;padding:.75rem;background:transparent;border:none;color:var(--text-muted);font-family:'Syne',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;border-radius:10px;transition:all .3s}
+        .tab-btn.active{background:linear-gradient(135deg,var(--primary),#1a5cb0);color:white;box-shadow:0 4px 15px var(--primary-glow)}
+        .form-panel{display:none}
+        .form-panel.active{display:block;animation:formSlide .4s ease forwards}
+        @keyframes formSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        .form-title{font-size:1.75rem;font-weight:800;letter-spacing:-1px;margin-bottom:.5rem}
+        .form-subtitle{font-size:.88rem;color:var(--text-soft);margin-bottom:1.75rem}
+        .alert{padding:.85rem 1rem;border-radius:10px;font-size:.83rem;margin-bottom:1.25rem;display:none;align-items:center;gap:.75rem;font-family:'Space Mono',monospace}
+        .alert.show{display:flex}
+        .alert.error{background:rgba(240,75,75,0.1);border:1px solid rgba(240,75,75,0.25);color:#f87171}
+        .alert.success{background:rgba(15,186,129,0.1);border:1px solid rgba(15,186,129,0.25);color:#34d399}
+        .form-group{margin-bottom:1.25rem}
+        .form-label{display:block;font-size:.78rem;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.5rem;font-family:'Space Mono',monospace}
+        .input-wrap{position:relative}
+        .input-icon{position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:.9rem;pointer-events:none}
+        .form-input{width:100%;padding:.85rem 1rem .85rem 2.75rem;background:var(--bg-panel);border:1px solid var(--border);border-radius:12px;color:var(--text-main);font-family:'Space Mono',monospace;font-size:.88rem;transition:all .3s;outline:none}
+        .form-input::placeholder{color:var(--text-muted)}
+        .form-input:focus{border-color:var(--border-focus);background:var(--bg-card);box-shadow:0 0 0 3px rgba(42,125,225,0.12)}
+        .pw-toggle{position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:.9rem;transition:color .3s}
+        .pw-toggle:hover{color:var(--primary)}
+        .input-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+        .submit-btn{width:100%;padding:1rem;background:linear-gradient(135deg,var(--primary),#1a5cb0);border:none;border-radius:12px;color:white;font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;margin-bottom:1.5rem;min-height:52px;display:flex;align-items:center;justify-content:center;gap:.6rem}
+        .submit-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 25px var(--primary-glow)}
+        .submit-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+        .spin{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .form-footer{text-align:center;font-size:.82rem;color:var(--text-muted)}
+        .form-footer a{color:var(--primary);text-decoration:none;font-weight:600;cursor:pointer}
+        .security-badge{display:flex;align-items:center;justify-content:center;gap:.5rem;font-size:.72rem;color:var(--text-muted);font-family:'Space Mono',monospace;margin-top:1rem}
+        .security-badge i{color:var(--success)}
+        .field-msg{font-size:.72rem;margin-top:.35rem;color:var(--danger);display:none;font-family:'Space Mono',monospace}
+        .field-msg.show{display:block}
+
+        /* ROLE SELECTOR */
+        .role-selector{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.25rem}
+        .role-option{padding:.75rem;background:var(--bg-panel);border:1.5px solid var(--border);border-radius:10px;cursor:pointer;text-align:center;transition:all .3s;user-select:none}
+        .role-option.selected.user{border-color:var(--primary);background:rgba(42,125,225,0.1)}
+        .role-option.selected.admin{border-color:var(--warning);background:rgba(245,166,35,0.1)}
+        .role-option .role-icon{font-size:1.4rem;margin-bottom:.35rem}
+        .role-option .role-name{font-size:.82rem;font-weight:700}
+        .role-option .role-desc{font-size:.7rem;color:var(--text-muted);margin-top:2px}
+        .admin-key-field{display:none;margin-top:.75rem}
+
+        @media(max-width:900px){.page{grid-template-columns:1fr}.left-panel{display:none}.right-panel{padding:1.5rem}body,html{overflow-y:auto}}
+    </style>
+</head>
+<body>
+<div class="grid-overlay"></div>
+<div class="glow-spot glow-1"></div>
+<div class="glow-spot glow-2"></div>
+
+<div class="page">
+    <!-- LEFT -->
+    <aside class="left-panel">
+        <div class="brand">
+            <div class="brand-icon"><i class="fa-solid fa-ghost"></i></div>
+            <div>
+                <div class="brand-name">PhantomBox</div>
+                <div class="brand-tag">Distributed Secure Storage</div>
+            </div>
+        </div>
+        <div class="hero">
+            <div class="hero-eyebrow">Zero-Knowledge Architecture</div>
+            <h1 class="hero-title">
+                <span class="ghost">Ghost your</span>
+                <span class="solid">data. Not</span>
+                <span class="ghost">your privacy.</span>
+            </h1>
+            <p class="hero-desc">Files dissolve into encrypted hologram noise across distributed nodes. Nothing stored permanently. Nothing that can be stolen.</p>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-dot fd-blue"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div class="feature-text"><strong>AES-256-GCM Encryption</strong><span>HKDF key derivation per fragment</span></div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-dot fd-green"><i class="fa-solid fa-circle-nodes"></i></div>
+                    <div class="feature-text"><strong>Hologram Noise Sharding</strong><span>2-of-3 threshold · meaningless fragments</span></div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-dot fd-orange"><i class="fa-solid fa-user-shield"></i></div>
+                    <div class="feature-text"><strong>RBAC Access Control</strong><span>Owner-only downloads · Admin audit trail</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="left-footer">
+            <span class="status-dot"></span>
+            <span>MySQL AUTH · RBAC ENFORCED · v3.1</span>
+        </div>
+    </aside>
+
+    <!-- RIGHT -->
+    <main class="right-panel">
+        <div class="auth-card">
+            <div class="tab-switcher">
+                <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+                <button class="tab-btn" id="tab-signup" onclick="switchTab('signup')">Create Account</button>
+            </div>
+
+            <!-- LOGIN -->
+            <div class="form-panel active" id="panel-login">
+                <h2 class="form-title">Welcome back.</h2>
+                <p class="form-subtitle">Sign in to access your secure vault.</p>
+                <div class="alert error" id="login-alert"><i class="fa-solid fa-triangle-exclamation"></i><span id="login-alert-msg"></span></div>
+                <div class="alert success" id="login-success"><i class="fa-solid fa-check-circle"></i><span id="login-success-msg"></span></div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <div class="input-wrap">
+                        <i class="fa-solid fa-envelope input-icon"></i>
+                        <input type="email" class="form-input" id="login-email" placeholder="you@domain.com">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-wrap">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input type="password" class="form-input" id="login-password" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()">
+                        <button type="button" class="pw-toggle" onclick="togglePw('login-password',this)"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                </div>
+                <button class="submit-btn" id="login-btn" onclick="doLogin()">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+                </button>
+                <p class="form-footer">No account? <a onclick="switchTab('signup')">Create one free</a></p>
+                <div class="security-badge"><i class="fa-solid fa-lock"></i> MySQL auth · bcrypt · JWT · RBAC enforced</div>
+            </div>
+
+            <!-- SIGNUP -->
+            <div class="form-panel" id="panel-signup">
+                <h2 class="form-title">Join PhantomBox.</h2>
+                <p class="form-subtitle">Create your account to start securing files.</p>
+                <div class="alert error" id="signup-alert"><i class="fa-solid fa-triangle-exclamation"></i><span id="signup-alert-msg"></span></div>
+
+                <!-- Role selector -->
+                <label class="form-label" style="margin-bottom:.75rem;">Account Role</label>
+                <div class="role-selector">
+                    <div class="role-option user selected" id="role-user" onclick="selectRole('User')">
+                        <div class="role-icon">👤</div>
+                        <div class="role-name" style="color:var(--primary)">User</div>
+                        <div class="role-desc">Upload & download own files</div>
+                    </div>
+                    <div class="role-option admin" id="role-admin" onclick="selectRole('Admin')">
+                        <div class="role-icon">🛡️</div>
+                        <div class="role-name" style="color:var(--warning)">Admin</div>
+                        <div class="role-desc">Full access + audit ledger</div>
+                    </div>
+                </div>
+
+                <!-- Admin secret key -->
+                <div class="admin-key-field" id="admin-key-wrap">
+                    <label class="form-label">Admin Secret Key</label>
+                    <div class="input-wrap">
+                        <i class="fa-solid fa-key input-icon"></i>
+                        <input type="password" class="form-input" id="admin-key" placeholder="Enter admin secret key">
+                    </div>
+                    <span class="field-msg show" style="color:var(--warning)"><i class="fa-solid fa-info-circle"></i> Admin key is set in your .env file (ADMIN_SECRET_KEY)</span>
+                </div>
+
+                <div class="input-row">
+                    <div class="form-group">
+                        <label class="form-label">First Name</label>
+                        <div class="input-wrap">
+                            <i class="fa-solid fa-user input-icon"></i>
+                            <input type="text" class="form-input" id="signup-first" placeholder="Ada">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name</label>
+                        <div class="input-wrap">
+                            <i class="fa-solid fa-user input-icon"></i>
+                            <input type="text" class="form-input" id="signup-last" placeholder="Lovelace">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <div class="input-wrap">
+                        <i class="fa-solid fa-envelope input-icon"></i>
+                        <input type="email" class="form-input" id="signup-email" placeholder="you@domain.com">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-wrap">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input type="password" class="form-input" id="signup-password" placeholder="Min 8 characters" onkeydown="if(event.key==='Enter')doSignup()">
+                        <button type="button" class="pw-toggle" onclick="togglePw('signup-password',this)"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                </div>
+                <button class="submit-btn" id="signup-btn" onclick="doSignup()">
+                    <i class="fa-solid fa-ghost"></i> Create Account
+                </button>
+                <p class="form-footer">Already have an account? <a onclick="switchTab('login')">Sign in</a></p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────
+const API = `http://${location.hostname}:8000/api/auth`;
+const ADMIN_SECRET = ''; // Filled from server-side env — left blank; backend validates
+
+let selectedRole = 'User';
+
+// ── Tab switching ────────────────────────────────────────────
+function switchTab(tab) {
+    ['login','signup'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+        document.getElementById(`panel-${t}`).classList.toggle('active', t === tab);
+    });
+}
+
+// ── Role selector ────────────────────────────────────────────
+function selectRole(role) {
+    selectedRole = role;
+    document.getElementById('role-user').classList.toggle('selected', role === 'User');
+    document.getElementById('role-admin').classList.toggle('selected', role === 'Admin');
+    document.getElementById('admin-key-wrap').style.display = role === 'Admin' ? 'block' : 'none';
+}
+
+// ── Password toggle ──────────────────────────────────────────
+function togglePw(id, btn) {
+    const el  = document.getElementById(id);
+    const ico = btn.querySelector('i');
+    el.type   = el.type === 'password' ? 'text' : 'password';
+    ico.className = el.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+}
+
+// ── Alert helpers ────────────────────────────────────────────
+function showAlert(id, msgId, msg, type = 'error') {
+    const el = document.getElementById(id);
+    el.className = `alert ${type} show`;
+    document.getElementById(msgId).textContent = msg;
+    setTimeout(() => el.classList.remove('show'), 6000);
+}
+
+function setBusy(btnId, busy, label = '') {
+    const btn = document.getElementById(btnId);
+    btn.disabled = busy;
+    btn.innerHTML = busy
+        ? '<span class="spin"></span> Please wait...'
+        : label;
+}
+
+// ── SESSION HELPERS ──────────────────────────────────────────
+function saveSession(data) {
+    localStorage.setItem('pb_token',  data.access_token);
+    localStorage.setItem('pb_user',   JSON.stringify(data.user));
+    localStorage.setItem('pb_role',   data.user.role);
+    localStorage.setItem('pb_loginAt',Date.now().toString());
+}
+
+// ── LOGIN ────────────────────────────────────────────────────
+async function doLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const pw    = document.getElementById('login-password').value;
+    if (!email || !pw) { showAlert('login-alert','login-alert-msg','Email and password are required.'); return; }
+
+    setBusy('login-btn', true, '<i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In');
+    try {
+        const res  = await fetch(`${API}/login`, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ email, password: pw })
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+            showAlert('login-alert','login-alert-msg', data.error || 'Login failed.');
+            return;
+        }
+
+        saveSession(data);
+        showAlert('login-success','login-success-msg',
+                  `✓ Welcome back, ${data.user.first_name}! [${data.user.role}]`, 'success');
+        setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+
+    } catch(e) {
+        showAlert('login-alert','login-alert-msg','Cannot connect to server. Is PhantomBox running?');
+    } finally {
+        setBusy('login-btn', false, '<i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In');
+    }
+}
+
+// ── SIGNUP ───────────────────────────────────────────────────
+async function doSignup() {
+    const first = document.getElementById('signup-first').value.trim();
+    const last  = document.getElementById('signup-last').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
+    const pw    = document.getElementById('signup-password').value;
+    const adminKey = document.getElementById('admin-key')?.value || '';
+
+    if (!first || !last || !email || !pw) {
+        showAlert('signup-alert','signup-alert-msg','All fields are required.'); return;
+    }
+    if (pw.length < 8) {
+        showAlert('signup-alert','signup-alert-msg','Password must be at least 8 characters.'); return;
+    }
+
+    setBusy('signup-btn', true, '<i class="fa-solid fa-ghost"></i> Create Account');
+    try {
+        const body = { email, password: pw, first_name: first, last_name: last, role: selectedRole };
+        if (selectedRole === 'Admin') body.admin_key = adminKey;
+
+        const res  = await fetch(`${API}/register`, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+            showAlert('signup-alert','signup-alert-msg', data.error || 'Registration failed.');
+            return;
+        }
+
+        // Auto-login after signup
+        const loginRes  = await fetch(`${API}/login`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({email, password: pw})
+        });
+        const loginData = await loginRes.json();
+        if (loginData.success) {
+            saveSession(loginData);
+            setTimeout(() => { window.location.href = 'index.html'; }, 800);
+        } else {
+            switchTab('login');
+        }
+
+    } catch(e) {
+        showAlert('signup-alert','signup-alert-msg','Cannot connect to server. Is PhantomBox running?');
+    } finally {
+        setBusy('signup-btn', false, '<i class="fa-solid fa-ghost"></i> Create Account');
+    }
+}
+</script>
+</body>
+</html>
