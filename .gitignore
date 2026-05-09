@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.pyc
+.vscode/
+noise_storage_A/
+noise_storage_B/
+tests/*.db
+scripts/backup_*.sql
